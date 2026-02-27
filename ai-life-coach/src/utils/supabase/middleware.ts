@@ -28,7 +28,7 @@ export async function updateSession(request: NextRequest) {
         }
     )
 
-    
+
     const {
         data: { user },
     } = await supabase.auth.getUser()
@@ -40,10 +40,10 @@ export async function updateSession(request: NextRequest) {
         !request.nextUrl.pathname.startsWith('/manifest.json') &&
         !request.nextUrl.pathname.startsWith('/icon-') &&
         !request.nextUrl.pathname.startsWith('/api') &&
-        !request.nextUrl.pathname.startsWith('/onboarding') &&
+        // !request.nextUrl.pathname.startsWith('/onboarding') &&
         request.nextUrl.pathname !== '/'
     ) {
-        
+
         const url = request.nextUrl.clone()
         url.pathname = '/login'
         return NextResponse.redirect(url)
