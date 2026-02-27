@@ -6,7 +6,12 @@ export default async function Home() {
   const { data: { user } } = await supabase.auth.getUser();
 
   if (user) {
-    redirect("/dashboard");
+    const { count } = await supabase.from('goals').select('*', { count: 'exact', head: true }).eq('user_id', user.id);
+    if (count && count > 0) {
+      redirect("/dashboard");
+    } else {
+      redirect("/onboarding");
+    }
   } else {
     redirect("/login");
   }

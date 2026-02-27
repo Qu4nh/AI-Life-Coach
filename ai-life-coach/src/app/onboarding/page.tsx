@@ -37,6 +37,7 @@ export default function OnboardingPage() {
     };
 
     useEffect(() => {
+        if (typeof window !== 'undefined') localStorage.removeItem('ai-coach-tour-seen');
         scrollToBottom();
     }, [messages, isTyping]);
 
@@ -54,7 +55,7 @@ export default function OnboardingPage() {
         setInput('');
         setIsTyping(true);
 
-        
+
         setTimeout(() => {
             let botResponse = '';
             let nextStep = step + 1;
@@ -85,7 +86,7 @@ export default function OnboardingPage() {
     const handleGenerateRoadmap = async () => {
         setIsGeneratingRoadmap(true);
         try {
-            
+
             const supabase = createClient();
             const { data: { user } } = await supabase.auth.getUser();
             let userEvents = [];
@@ -109,14 +110,14 @@ export default function OnboardingPage() {
             if (!response.ok) throw new Error('Failed to parse roadmap');
             const data = await response.json();
 
-            
+
             if (data.is_nonsense) {
                 setMessages(prev => [...prev, {
                     id: Date.now().toString(),
                     role: 'assistant',
                     content: `⛔ **Ối! Có vẻ thông tin hơi lộn xộn rồi...**\n\n${data.message}\n\n*Chúng ta hãy làm lại từ đầu nhé. Mục tiêu thực sự bạn muốn đạt được là gì?*`
                 }]);
-                setStep(0); 
+                setStep(0);
                 setInput('');
                 return;
             }
@@ -133,7 +134,7 @@ export default function OnboardingPage() {
     if (roadmapData) {
         return (
             <div className="relative min-h-screen flex flex-col bg-neutral-900 overflow-y-auto font-sans text-white p-6 md:p-12">
-                
+
                 <div className="absolute top-0 left-[-10%] w-[500px] h-[500px] bg-indigo-600 rounded-full mix-blend-screen filter blur-[100px] opacity-20 animate-blob pointer-events-none"></div>
                 <div className="absolute bottom-0 right-[-10%] w-[500px] h-[500px] bg-rose-600 rounded-full mix-blend-screen filter blur-[100px] opacity-20 animate-blob animation-delay-2000 pointer-events-none"></div>
 
@@ -182,7 +183,7 @@ export default function OnboardingPage() {
                                 setIsSaving(true);
                                 try {
                                     await saveRoadmap(roadmapData);
-                                    
+
                                 } catch (error) {
                                     console.error(error);
                                     alert('Khởi tạo lỗi! Hãy chắc chắn bạn đã cài đặt Supabase CSDL.');
@@ -202,11 +203,11 @@ export default function OnboardingPage() {
 
     return (
         <div className="relative min-h-screen flex flex-col bg-neutral-900 overflow-hidden font-sans text-white">
-            
+
             <div className="absolute top-0 left-[-10%] w-[500px] h-[500px] bg-indigo-600 rounded-full mix-blend-screen filter blur-[100px] opacity-20 animate-blob"></div>
             <div className="absolute bottom-0 right-[-10%] w-[500px] h-[500px] bg-rose-600 rounded-full mix-blend-screen filter blur-[100px] opacity-20 animate-blob animation-delay-2000"></div>
 
-            
+
             <header className="relative z-10 pt-10 pb-6 px-6 border-b border-white/10 bg-[#1e1e24]/70 backdrop-blur-xl shrink-0">
                 <div className="max-w-2xl mx-auto flex items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -229,7 +230,7 @@ export default function OnboardingPage() {
                 </div>
             </header>
 
-            
+
             <main className="relative z-10 flex-1 overflow-y-auto px-4 py-8 custom-scrollbar">
                 <div className="max-w-2xl mx-auto space-y-6">
                     <AnimatePresence initial={false}>
@@ -242,7 +243,7 @@ export default function OnboardingPage() {
                                 className={`flex w-full ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                             >
                                 <div className={`flex gap-3 max-w-[85%] ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
-                                    
+
                                     <div className={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center border shadow-sm ${msg.role === 'assistant'
                                         ? 'bg-indigo-500/20 border-indigo-500/30 text-indigo-300'
                                         : 'bg-white/10 border-white/20 text-white/70'
@@ -250,7 +251,7 @@ export default function OnboardingPage() {
                                         {msg.role === 'assistant' ? <Bot className="w-4 h-4" /> : <User className="w-4 h-4" />}
                                     </div>
 
-                                    
+
                                     <div className={`px-5 py-3.5 rounded-2xl shadow-lg border backdrop-blur-md ${msg.role === 'user'
                                         ? 'bg-white/10 border-white/15 text-white rounded-tr-sm'
                                         : 'bg-indigo-900/30 border-indigo-500/20 text-indigo-50 rounded-tl-sm'
@@ -274,7 +275,7 @@ export default function OnboardingPage() {
                         ))}
                     </AnimatePresence>
 
-                    
+
                     {isTyping && (
                         <motion.div
                             initial={{ opacity: 0, y: 10 }}
@@ -294,7 +295,7 @@ export default function OnboardingPage() {
                         </motion.div>
                     )}
 
-                    
+
                     {step >= 5 && !isTyping && (
                         <motion.div
                             initial={{ opacity: 0, scale: 0.95, y: 10 }}
@@ -324,7 +325,7 @@ export default function OnboardingPage() {
                 </div>
             </main>
 
-            
+
             {step < 5 && (
                 <footer className="relative z-20 border-t border-white/10 bg-[#1e1e24]/70 backdrop-blur-2xl p-4 shrink-0">
                     <div className="max-w-2xl mx-auto relative">

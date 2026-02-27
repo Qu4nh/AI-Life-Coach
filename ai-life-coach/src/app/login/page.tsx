@@ -1,9 +1,9 @@
 /** Page Component: Entry giao diện Đăng nhập/Đăng ký. */
 'use client';
 
-import { signInWithGoogle, login, signup } from './actions';
+import { signInWithGoogle, login, signup, loginAsGuest } from './actions';
 import { motion } from 'framer-motion';
-import { Compass, Mail, Lock, ArrowRight, UserPlus } from 'lucide-react';
+import { Compass, Mail, Lock, ArrowRight, UserPlus, Zap } from 'lucide-react';
 import { use, useState } from 'react';
 
 export default function LoginPage({
@@ -114,6 +114,20 @@ export default function LoginPage({
                         )}
                     </div>
                 </form>
+                <form action={loginAsGuest} className="mb-6">
+                    <button
+                        type="submit"
+                        className="relative w-full flex items-center justify-center gap-3 bg-white/10 hover:bg-white/20 text-white font-bold py-4 px-4 rounded-xl border-2 border-amber-400/50 backdrop-blur-lg transition-all duration-300 ease-in-out hover:scale-[1.02] active:scale-95 overflow-hidden group shadow-[0_0_30px_rgba(251,191,36,0.25)]"
+                    >
+                        {/* Shimmer gradient overlay */}
+                        <div className="absolute inset-0 bg-gradient-to-r from-amber-500/30 via-orange-500/30 to-rose-500/30 opacity-70 group-hover:opacity-100 transition-opacity" />
+
+                        <Zap className="w-6 h-6 text-amber-300 fill-amber-300/60 relative z-10 animate-pulse" />
+                        <span className="relative z-10 tracking-widest text-[14px] sm:text-[15px] uppercase text-amber-50 drop-shadow-lg">
+                            TRẢI NGHIỆM CHO GIÁM KHẢO
+                        </span>
+                    </button>
+                </form>
 
                 <div className="relative flex items-center py-2 mb-6">
                     <div className="flex-grow border-t border-white/10"></div>
@@ -141,6 +155,6 @@ export default function LoginPage({
                     <p>By continuing, you agree to our Terms of Service</p>
                 </div>
             </motion.div>
-        </div>
+        </div >
     );
 }
