@@ -77,25 +77,38 @@ export async function signup(formData: FormData) {
 
 export async function loginAsGuest() {
     const supabase = await createClient()
-    const randomId = Math.random().toString(36).substring(2, 8)
-    const email = `giamkhao_${randomId}@aiyoungguru.vn`
+    const randomIndex = Math.floor(Math.random() * 10) + 1;
+    const email = `giamkhao_${randomIndex}@aiyoungguru.vn`
     const password = 'aiyoungguru2026vip'
 
-    const { data, error: signUpError } = await supabase.auth.signUp({
+    let { data, error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
     })
 
-    if (signUpError) {
-        console.error('Guest Signup error:', signUpError.message)
-        return redirect(`/login?message=${encodeURIComponent('Lỗi tạo tài khoản Demo: ' + signUpError.message)}`)
+    if (signInError) {
+        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+            email,
+            password,
+        })
+
+        if (signUpError) {
+            console.error('Guest Signup error:', signUpError.message)
+            return redirect(`/login?message=${encodeURIComponent('Lỗi tạo tài khoản Demo: ' + signUpError.message)}`)
+        }
+        data = signUpData as any;
     }
 
     if (!data.session) {
-        // Cảnh báo nếu Supabase dự án đang bật "Confirm Email". Giám khảo không thể auto-login được.
         return redirect(`/login?message=${encodeURIComponent('Vui lòng vào Supabase (Auth -> Providers -> Email) TẮT tính năng "Confirm Email" để dùng Trải nghiệm nhanh!')}`)
     }
 
-    // Đã signup và login thành công bằng tài khoản trinh nguyên, chuyển thẳng Onboarding.
+    if (data.user) {
+        await supabase.from('goals').delete().eq('user_id', data.user.id);
+        await supabase.from('tasks').delete().eq('user_id', data.user.id);
+        await supabase.from('events').delete().eq('user_id', data.user.id);
+        await supabase.from('daily_logs').delete().eq('user_id', data.user.id);
+    }
+
     return redirect('/onboarding')
 }
