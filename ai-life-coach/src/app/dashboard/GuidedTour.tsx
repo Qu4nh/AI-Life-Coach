@@ -54,7 +54,7 @@ const TOUR_STEPS: TourStep[] = [
         scrollTo: true,
     },
     {
-        target: '[data-tour="tasks"]',
+        target: '[data-tour="first-task"]',
         icon: Hand,
         title: 'Vuốt Thẻ Nhiệm Vụ ← →',
         description: 'Thử vuốt thẻ bên dưới! Vuốt TRÁI ✅ để hoàn thành, vuốt PHẢI ❌ để dời lịch. Ngoài ra bạn có thể sắp xếp thẻ theo nhu cầu của mình',
@@ -209,12 +209,9 @@ export default function GuidedTour() {
             setSpotlightRect(null);
             setTooltipStyle({
                 position: 'fixed',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                margin: 'auto',
-                height: 'fit-content',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
                 maxWidth: '420px',
                 width: '90vw',
                 zIndex: 110,
@@ -227,12 +224,9 @@ export default function GuidedTour() {
             setSpotlightRect(null);
             setTooltipStyle({
                 position: 'fixed',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                margin: 'auto',
-                height: 'fit-content',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
                 maxWidth: '420px',
                 width: '90vw',
                 zIndex: 110,
@@ -276,11 +270,14 @@ export default function GuidedTour() {
             const isMobile = vw < 640;
 
             if (isMobile) {
-                // Place below element if there's room, otherwise above
+                // Place ABOVE element for 'right', BELOW for 'left'
                 const spaceBelow = vh - rect.bottom;
                 const spaceAbove = rect.top;
+                const preferAbove = current.position === 'right';
 
-                if (spaceBelow > 240) {
+                if (preferAbove && spaceAbove > 240) {
+                    style.bottom = `${vh - rect.top + PADDING + 8}px`;
+                } else if (spaceBelow > 240) {
                     style.top = `${rect.bottom + PADDING + 8}px`;
                 } else if (spaceAbove > 240) {
                     style.bottom = `${vh - rect.top + PADDING + 8}px`;

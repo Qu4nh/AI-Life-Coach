@@ -147,7 +147,7 @@ export default function ClientTaskList({ initialTasks, energyLevel }: { initialT
             ) : (
                 <motion.div layout className="flex flex-col gap-4 w-full relative z-10">
                     <AnimatePresence mode="popLayout">
-                        {processedTasks.map((task) => (
+                        {processedTasks.map((task, idx) => (
                             <motion.div
                                 layout
                                 key={task.id}
@@ -155,6 +155,7 @@ export default function ClientTaskList({ initialTasks, energyLevel }: { initialT
                                 animate={{ opacity: 1, scale: 1, y: 0 }}
                                 exit={{ opacity: 0, scale: 0.95, height: 0, marginBottom: 0, overflow: 'hidden' }}
                                 transition={{ duration: 0.3 }}
+                                {...(idx === 0 ? { 'data-tour': 'first-task' } : {})}
                             >
                                 <TaskCard task={task} />
                             </motion.div>
