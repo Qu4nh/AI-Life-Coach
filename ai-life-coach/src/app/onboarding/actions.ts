@@ -13,30 +13,30 @@ export async function saveRoadmap(roadmapData: any) {
     }
 
     try {
-        
+
         await supabase.from('profiles').upsert({
             id: user.id,
             email: user.email,
         }, { onConflict: 'id' })
 
-        
+
         const { data: goal, error: goalError } = await supabase.from('goals').insert({
             user_id: user.id,
             title: roadmapData.title,
             description: roadmapData.description,
             type: 'long_term',
-            target_date: roadmapData.target_date || null,
+            deadline: roadmapData.target_date || null,
         }).select().single()
 
         if (goalError) throw goalError
 
-        
+
         const tasksToInsert = roadmapData.tasks.map((task: any, index: number) => ({
             user_id: user.id,
             goal_id: goal.id,
             content: `${task.title} - ${task.description}`,
-            priority: index, 
-            energy_required: 3, 
+            priority: index,
+            energy_required: 3,
         }))
 
         const { error: tasksError } = await supabase.from('tasks').insert(tasksToInsert)
@@ -48,6 +48,6 @@ export async function saveRoadmap(roadmapData: any) {
         throw new Error('Có lỗi xảy ra khi lưu Kế hoạch. Vui lòng thử lại.')
     }
 
-    
+
     redirect('/dashboard')
 }

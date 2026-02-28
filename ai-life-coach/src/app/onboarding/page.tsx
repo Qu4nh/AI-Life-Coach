@@ -69,7 +69,7 @@ export default function OnboardingPage() {
             } else if (step === 3) {
                 botResponse = 'Cuối cùng, bạn có muốn chia sẻ **thêm thông tin, hoặc khó khăn dự kiến** nào không? (vd: mình khá lười, hay mất tập trung, bận con nhỏ...) 💬';
             } else {
-                botResponse = 'Tuyệt vời! Mình đã ghi nhận đủ 5 thông tin cốt lõi:\n- Mục tiêu\n- Thời lượng\n- Ngày hẹn chót\n- Trình độ\n- Ngữ cảnh khác\n\nBây giờ, hãy nhấn nút **"Chốt Lộ Trình Ngay!"** bên dưới để Bộ não AI thực sự tiếp nhận và phân tích kế hoạch chi tiết cho bạn nhé. 🚀';
+                botResponse = 'Tuyệt vời! Mình đã ghi nhận đủ 5 thông tin cốt lõi:\n- Mục tiêu\n- Thời lượng\n- Ngày hẹn chót\n- Trình độ\n- Ngữ cảnh khác\n\nBây giờ, hãy nhấn nút **"Chốt Lộ Trình Ngay!"** bên dưới để Bộ não AI tiếp nhận và phân tích kế hoạch chi tiết cho bạn nhé. 🚀';
             }
 
             setMessages(prev => [...prev, {
@@ -170,15 +170,9 @@ export default function OnboardingPage() {
                         </div>
                     </div>
 
-                    <div className="flex gap-4 pb-12">
+                    <div className="pb-12">
                         <button
-                            onClick={() => setRoadmapData(null)}
-                            className="flex-1 py-4 bg-white/5 hover:bg-white/10 rounded-xl font-medium border border-white/10 transition-all font-sans text-sm md:text-base"
-                        >
-                            Chỉnh sửa thêm
-                        </button>
-                        <button
-                            className="flex-1 py-4 bg-indigo-500 hover:bg-indigo-600 rounded-xl font-medium shadow-lg transition-all flex items-center justify-center gap-2 text-sm md:text-base active:scale-95 disabled:bg-indigo-500/50"
+                            className="w-full py-4 bg-indigo-500 hover:bg-indigo-600 rounded-xl font-medium shadow-lg transition-all flex items-center justify-center gap-2 text-sm md:text-base active:scale-95 disabled:bg-indigo-500/50"
                             onClick={async () => {
                                 setIsSaving(true);
                                 try {

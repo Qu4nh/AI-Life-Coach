@@ -18,7 +18,7 @@ export async function hasCheckedInToday() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return false;
 
-    
+
     const today = getVietnamToday();
 
     const { data, error } = await supabase
@@ -40,7 +40,7 @@ export async function saveDailyCheckIn(energyLevel: number, mood: string, notes:
 
     const today = getVietnamToday();
 
-    
+
     const { error: profileError } = await supabase.from('profiles').upsert({
         id: user.id,
         email: user.email,
@@ -110,7 +110,7 @@ export async function rescheduleTask(taskId: string) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) throw new Error('Not authenticated');
 
-    
+
     const tomorrow = getVietnamNow();
     tomorrow.setDate(tomorrow.getDate() + 1);
     const dateStr = tomorrow.toLocaleDateString('sv-SE');
@@ -156,7 +156,7 @@ export async function deleteGoal(goalId: string): Promise<{ success: boolean; er
     console.log('[deleteGoal] START - goalId:', goalId, 'userId:', user.id);
 
     try {
-        
+
         const { error: tasksError, count: tasksCount } = await supabase
             .from('tasks')
             .delete({ count: 'exact' })
@@ -169,7 +169,7 @@ export async function deleteGoal(goalId: string): Promise<{ success: boolean; er
             return { success: false, error: `Lỗi xoá tasks: ${tasksError.message}` };
         }
 
-        
+
         const { error: goalError, count: goalCount } = await supabase
             .from('goals')
             .delete({ count: 'exact' })
@@ -206,7 +206,7 @@ export async function saveEnergySnapshot(level: number, trigger: string) {
     const today = getVietnamToday();
     const now = new Date().toISOString();
 
-    
+
     const { data: existing } = await supabase
         .from('daily_logs')
         .select('notes, energy_level')
@@ -243,7 +243,7 @@ export async function loadMockData(): Promise<{ success: boolean; error?: string
 
         await supabase.from('profiles').upsert({ id: user.id, email: user.email }, { onConflict: 'id' });
 
-        
+
         const vnNow = getVietnamNow();
         const todayStr = getVietnamToday();
 
@@ -253,10 +253,10 @@ export async function loadMockData(): Promise<{ success: boolean; error?: string
             return d.toLocaleDateString('sv-SE');
         };
 
-        
+
         await supabase.from('daily_logs').delete().eq('user_id', user.id).eq('date', todayStr);
 
-        
+
         const targetDate = new Date(vnNow);
         targetDate.setDate(targetDate.getDate() + 45);
 
@@ -289,9 +289,9 @@ export async function loadMockData(): Promise<{ success: boolean; error?: string
             return { success: false, error: `Lỗi tạo Goal 2: ${goal2Error?.message || 'Không rõ'}` };
         }
 
-        
+
         const tasks = [
-            
+
             { content: "Flashcard từ vựng Academic - Bắt đầu: 07:00 | Thời lượng: 15 phút\nChi tiết: Ôn tập 50 từ trong bộ 'Barron's Essential Words'", priority: 1, energy_required: 1, status: 'pending', due_date: todayStr },
             { content: "Nghe Podcast BBC 6 Minute English - Bắt đầu: 08:30 | Thời lượng: 20 phút", priority: 2, energy_required: 2, status: 'pending', due_date: todayStr },
             { content: "Đọc passage Cambridge IELTS 18 - Test 1 - Bắt đầu: 10:00 | Thời lượng: 40 phút\nChi tiết: Highlight keyword và lập bảng từ đồng nghĩa (synonyms table) sau khi kiểm tra đáp án.", priority: 3, energy_required: 3, status: 'pending', due_date: todayStr },
@@ -299,23 +299,23 @@ export async function loadMockData(): Promise<{ success: boolean; error?: string
             { content: "Speaking Practice: Part 2 Cue Card - Bắt đầu: 16:00 | Thời lượng: 30 phút\nChi tiết: Chủ đề 'Describe a person you admire'. Ghi âm lại và gửi cho partner nghe nhận xét.", priority: 5, energy_required: 3, status: 'pending', due_date: todayStr },
             { content: "Ôn Grammar: Relative Clauses - Bắt đầu: 20:00 | Thời lượng: 25 phút", priority: 6, energy_required: 2, status: 'pending', due_date: todayStr },
 
-            
+
             { content: "Luyện Listening Section 3-4 - Bắt đầu: 09:00 | Thời lượng: 35 phút\nChi tiết: Tập trung vào kỹ năng nghe dictation và Multiple Choice Questions.", priority: 1, energy_required: 3, status: 'pending', due_date: dayOffset(1) },
             { content: "Writing Task 1: Bar Chart Analysis - Bắt đầu: 11:00 | Thời lượng: 30 phút", priority: 2, energy_required: 4, status: 'pending', due_date: dayOffset(1) },
             { content: "Đọc báo The Guardian 2 bài - Bắt đầu: 15:00 | Thời lượng: 20 phút", priority: 3, energy_required: 2, status: 'pending', due_date: dayOffset(1) },
             { content: "Mock Speaking Test với AI - Bắt đầu: 19:00 | Thời lượng: 15 phút\nChi tiết: Sử dụng App Elsa Speak hoặc ChatGPT Voice mode", priority: 4, energy_required: 5, status: 'pending', due_date: dayOffset(1) },
 
-            
+
             { content: "Full Practice Test - Reading - Bắt đầu: 09:00 | Thời lượng: 60 phút", priority: 1, energy_required: 5, status: 'pending', due_date: dayOffset(2) },
             { content: "Review lỗi sai Test hôm trước - Bắt đầu: 14:00 | Thời lượng: 30 phút\nChi tiết: Viết lại các câu sai Grammar vào sổ tay", priority: 2, energy_required: 2, status: 'pending', due_date: dayOffset(2) },
             { content: "Học Collocations chủ đề Environment - Bắt đầu: 20:00 | Thời lượng: 15 phút", priority: 3, energy_required: 1, status: 'pending', due_date: dayOffset(2) },
 
-            
+
             { content: "Học 20 từ vựng Topic Health - Bắt đầu: 07:00 | Thời lượng: 15 phút\nChi tiết: Học xong vào Quizlet làm bài Mini Test nha", priority: 1, energy_required: 1, status: 'completed', due_date: dayOffset(-1) },
             { content: "Nghe TED Talk + ghi chú - Bắt đầu: 09:00 | Thời lượng: 25 phút", priority: 2, energy_required: 2, status: 'completed', due_date: dayOffset(-1) },
             { content: "Viết Essay Task 2: Technology Topic - Bắt đầu: 14:00 | Thời lượng: 45 phút", priority: 3, energy_required: 4, status: 'completed', due_date: dayOffset(-1) },
 
-            
+
             { content: "Listening Practice Test 2 - Bắt đầu: 10:00 | Thời lượng: 30 phút", priority: 1, energy_required: 3, status: 'completed', due_date: dayOffset(-2) },
             { content: "Speaking Part 1: Hometown & Work - Bắt đầu: 16:00 | Thời lượng: 20 phút\nChi tiết: List ra vocab về làng quê, công việc hiện tại", priority: 2, energy_required: 3, status: 'completed', due_date: dayOffset(-2) },
         ];
@@ -342,7 +342,7 @@ export async function loadMockData(): Promise<{ success: boolean; error?: string
             return { success: false, error: `Lỗi tạo Tasks 2: ${tasks2Error.message}` };
         }
 
-        
+
         const events = [
             { title: "📝 Thi thử IELTS Mini Test", description: "Bao gồm cả 4 kỹ năng - Nhớ cầm the bút chì đậm và gôm đi thi", date: dayOffset(5), is_hard_deadline: true },
             { title: "📅 Nộp Essay cho giáo viên", description: "", date: dayOffset(3), is_hard_deadline: true },
@@ -357,7 +357,7 @@ export async function loadMockData(): Promise<{ success: boolean; error?: string
         );
         if (eventsError) console.error('[loadMockData] Events error (non-fatal):', eventsError);
 
-        
+
         const logs = [
             { user_id: user.id, date: dayOffset(-2), energy_level: 4, mood: 'motivated', notes: 'Ngủ đủ giấc, tập trung tốt. Hoàn thành 2/2 task.' },
             { user_id: user.id, date: dayOffset(-1), energy_level: 3, mood: 'neutral', notes: 'Hơi mệt buổi chiều nhưng vẫn viết xong Essay. Cần ngủ sớm hơn.' },
@@ -428,12 +428,17 @@ NĂNG LƯỢNG TRUNG BÌNH 7 NGÀY: ${avgEnergy}/5
 GHI CHÚ GẦN ĐÂY:
 ${recentNotes || 'Không có ghi chú'}
 
-YÊU CẦU: Dựa trên tiến độ và năng lượng, hãy tạo danh sách task MỚI (thay thế hoàn toàn task pending cũ). Điều chỉnh độ khó phù hợp năng lượng. Mỗi task cần title rõ ràng kèm thời gian.
+YÊU CẦU: Dựa trên tiến độ và năng lượng, hãy tạo danh sách task MỚI (thay thế hoàn toàn task pending cũ). Điều chỉnh độ khó phù hợp năng lượng.
+
+QUY TẮC FORMAT QUAN TRỌNG:
+- "title": CHỈ chứa TÊN NGẮN GỌN CỦA TASK và THỜI GIAN. KHÔNG được chèn ghi chú hay mô tả vào đây.
+- "description": Chứa GHI CHÚ hoặc MÔ TẢ chi tiết về cách thực hiện task.
+- KHÔNG BAO GIỜ nhồi description/note vào bên trong title.
 
 CHỈ trả về JSON thuần (không markdown):
 {
   "tasks": [
-    { "title": "Tên task - Bắt đầu: HH:MM | Thời lượng: X phút", "description": "Chi tiết ngắn", "energy_required": 1-5 }
+    { "title": "Tên task ngắn gọn (Bắt đầu: HH:MM | Thời lượng: X phút/giờ)", "description": "Ghi chú chi tiết hoặc hướng dẫn cách làm", "energy_required": 1-5 }
   ],
   "coach_note": "Một câu nhận xét ngắn về tiến độ"
 }`;
@@ -452,13 +457,13 @@ CHỈ trả về JSON thuần (không markdown):
         throw new Error('AI trả về dữ liệu không hợp lệ');
     }
 
-    
+
     await supabase.from('tasks')
         .delete()
         .eq('goal_id', activeGoal.id)
         .eq('status', 'pending');
 
-    
+
     const newTasks = data.tasks.map((t: any, idx: number) => ({
         user_id: user.id,
         goal_id: activeGoal.id,
