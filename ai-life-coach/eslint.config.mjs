@@ -1,4 +1,3 @@
-/** Project Configuration/Module: eslint.config.mjs - Thiết lập và kiến trúc hệ thống. */
 import { defineConfig, globalIgnores } from "eslint/config";
 import nextVitals from "eslint-config-next/core-web-vitals";
 import nextTs from "eslint-config-next/typescript";

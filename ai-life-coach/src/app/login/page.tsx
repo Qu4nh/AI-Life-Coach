@@ -13,6 +13,7 @@ export default function LoginPage({
 }) {
     const params = use(searchParams);
     const [isLoginMode, setIsLoginMode] = useState(true);
+    const [isGuestLoading, setIsGuestLoading] = useState(false);
 
     return (
         <div className="relative min-h-screen flex items-center justify-center overflow-hidden bg-neutral-900">
@@ -114,18 +115,30 @@ export default function LoginPage({
                         )}
                     </div>
                 </form>
-                <form action={loginAsGuest} className="mb-6">
+                <form action={loginAsGuest} onSubmit={() => setIsGuestLoading(true)} className="mb-6">
                     <button
                         type="submit"
-                        className="relative w-full flex items-center justify-center gap-3 bg-white/10 hover:bg-white/20 text-white font-bold py-4 px-4 rounded-xl border-2 border-amber-400/50 backdrop-blur-lg transition-all duration-300 ease-in-out hover:scale-[1.02] active:scale-95 overflow-hidden group shadow-[0_0_30px_rgba(251,191,36,0.25)]"
+                        disabled={isGuestLoading}
+                        className="relative w-full flex items-center justify-center gap-3 bg-white/10 hover:bg-white/20 text-white font-bold py-4 px-4 rounded-xl border-2 border-amber-400/50 backdrop-blur-lg transition-all duration-300 ease-in-out hover:scale-[1.02] active:scale-95 overflow-hidden group shadow-[0_0_30px_rgba(251,191,36,0.25)] disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:scale-100"
                     >
                         {/* Shimmer gradient overlay */}
                         <div className="absolute inset-0 bg-gradient-to-r from-amber-500/30 via-orange-500/30 to-rose-500/30 opacity-70 group-hover:opacity-100 transition-opacity" />
 
-                        <Zap className="w-6 h-6 text-amber-300 fill-amber-300/60 relative z-10 animate-pulse" />
-                        <span className="relative z-10 tracking-widest text-[14px] sm:text-[15px] uppercase text-amber-50 drop-shadow-lg">
-                            TRẢI NGHIỆM CHO GIÁM KHẢO
-                        </span>
+                        {isGuestLoading ? (
+                            <>
+                                <div className="w-5 h-5 rounded-full border-2 border-amber-300 border-t-transparent animate-spin relative z-10" />
+                                <span className="relative z-10 tracking-widest text-[14px] sm:text-[15px] uppercase text-amber-50 drop-shadow-lg">
+                                    Đang vào...
+                                </span>
+                            </>
+                        ) : (
+                            <>
+                                <Zap className="w-6 h-6 text-amber-300 fill-amber-300/60 relative z-10 animate-pulse" />
+                                <span className="relative z-10 tracking-widest text-[14px] sm:text-[15px] uppercase text-amber-50 drop-shadow-lg">
+                                    TRẢI NGHIỆM CHO GIÁM KHẢO
+                                </span>
+                            </>
+                        )}
                     </button>
                 </form>
 
