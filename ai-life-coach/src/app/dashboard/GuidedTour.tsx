@@ -271,24 +271,48 @@ export default function GuidedTour() {
             }
             const leftPos = rect.left + rect.width / 2 - tooltipW / 2;
             style.left = `${Math.max(16, Math.min(leftPos, vw - tooltipW - 16))}px`;
-        } else if (current.position === 'left') {
-            const leftPos = rect.left - tooltipW - PADDING - 8;
-            if (leftPos < 16) {
-                style.left = `${rect.right + PADDING + 8}px`;
+        } else if (current.position === 'left' || current.position === 'right') {
+            // On mobile (< 640px), always show tooltip above or below the element
+            const isMobile = vw < 640;
+
+            if (isMobile) {
+                // Place below element if there's room, otherwise above
+                const spaceBelow = vh - rect.bottom;
+                const spaceAbove = rect.top;
+
+                if (spaceBelow > 240) {
+                    style.top = `${rect.bottom + PADDING + 8}px`;
+                } else if (spaceAbove > 240) {
+                    style.bottom = `${vh - rect.top + PADDING + 8}px`;
+                } else {
+                    // Absolute fallback: center vertically
+                    style.top = `${Math.max(16, Math.min(rect.top, vh - 260))}px`;
+                }
+                style.left = `${Math.max(16, Math.min((vw - tooltipW) / 2, vw - tooltipW - 16))}px`;
             } else {
-                style.left = `${leftPos}px`;
+                // Desktop: try side placement
+                if (current.position === 'left') {
+                    const leftPos = rect.left - tooltipW - PADDING - 8;
+                    if (leftPos < 16) {
+                        style.left = `${rect.right + PADDING + 8}px`;
+                    } else {
+                        style.left = `${leftPos}px`;
+                    }
+                } else {
+                    const leftPos = rect.right + PADDING + 8;
+                    if (leftPos + tooltipW > vw - 16) {
+                        style.left = `${rect.left - tooltipW - PADDING - 8}px`;
+                    } else {
+                        style.left = `${leftPos}px`;
+                    }
+                }
+                const topPos = rect.top + rect.height / 2 - 110;
+                style.top = `${Math.max(16, Math.min(topPos, vh - 250))}px`;
+                // Clamp left to viewport
+                const parsedLeft = parseFloat(style.left as string);
+                if (parsedLeft < 16) style.left = '16px';
+                if (parsedLeft + tooltipW > vw - 16) style.left = `${vw - tooltipW - 16}px`;
             }
-            const topPos = rect.top + rect.height / 2 - 110;
-            style.top = `${Math.max(16, Math.min(topPos, vh - 250))}px`;
-        } else if (current.position === 'right') {
-            const leftPos = rect.right + PADDING + 8;
-            if (leftPos + tooltipW > vw - 16) {
-                style.left = `${rect.left - tooltipW - PADDING - 8}px`;
-            } else {
-                style.left = `${leftPos}px`;
-            }
-            const topPos = rect.top;
-            style.top = `${Math.max(16, Math.min(topPos, vh - 250))}px`;
         }
 
         setTooltipStyle(style);
