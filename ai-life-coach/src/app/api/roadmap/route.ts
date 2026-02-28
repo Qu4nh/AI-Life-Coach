@@ -5,11 +5,9 @@ import { createClient } from '@/utils/supabase/server';
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
-
 const rateLimitMap = new Map<string, { count: number, timestamp: number }>();
 
 // Cơ chế Rate Limit in-memory để ngăn chặn spam API request từ người dùng.
-// TODO: Cân nhắc chuyển sang cấu trúc persistent (Redis/Upstash) khi scale hệ thống.
 const isRateLimited = (userId: string) => {
   const now = Date.now();
   const windowMs = 15 * 60 * 1000;
@@ -29,39 +27,51 @@ const isRateLimited = (userId: string) => {
   return false;
 };
 
-
 const model = genAI.getGenerativeModel({
   model: 'gemini-2.5-flash',
   systemInstruction: `Bạn là trợ lý hệ thống phân tích đoạn hội thoại Life Coach.
-Nhiệm vụ: Trích xuất mục tiêu cuối cùng của người dùng và các bước thực hiện thành format JSON thuần túy (không có markdown).
+Nhiệm vụ: Trích xuất mục tiêu cuối cùng của người dùng và lập LỘ TRÌNH LÀM VIỆC DÀI HẠN thành format JSON thuần túy (không markdown).
 QUAN TRỌNG BẬC NHẤT: Bạn PHẢI đọc kỹ lịch sử chat.
-1. NẾU người dùng nhập thông tin rác, vô nghĩa (vd: 'asdasd', '1q2w3e'), quá ngắn, đùa cợt, hoặc không xác định được bất kỳ mục tiêu phát triển bản thân nào, hãy trả về JSON bắt lỗi:
+1. NẾU người dùng nhập thông tin rác, vô nghĩa, hãy trả về JSON bắt lỗi:
 {
   "is_nonsense": true,
   "message": "Lời khuyên nhắc nhở nhẹ nhàng, hài hước bằng tiếng Việt yêu cầu user nghiêm túc nhập lại mục tiêu."
 }
-2. NẾU mục tiêu hợp lệ, hãy trích xuất và đưa vào Kế hoạch. Đồng thời sử dụng cả 5 thông tin: Mục tiêu ban chốt, Thời lượng muốn đầu tư, Ngày hoàn thành (Target Date), Trình độ hiện hành, và Các Khó khăn để cá nhân hóa lộ trình.
-Cấu trúc bắt buộc cho mục tiêu HỢP LỆ:
+2. NẾU mục tiêu hợp lệ, hãy trích xuất Kế hoạch dựa trên 5 thông tin: Mục tiêu ban chốt, Thời lượng đầu tư, Ngày hoàn thành (Target Date), Trình độ hiện hành, và Các Khó khăn.
+
+=== QUY TẮC PHÂN BỔ TASKS QUAN TRỌNG ===
+- BẠN PHẢI CHIA NHỎ LỘ TRÌNH RA THÀNH TỪNG NGÀY CỤ THỂ (Bắt đầu từ ngày hôm nay, kéo dài nhiều ngày).
+- MỖI NGÀY tạo khoảng 1-2 hành động (Tối đa 2 task/ngày để không bị ngợp).
+- KHÔNG ĐƯỢC gộp nhiều ngày vào 1 task (CẤM dùng "Sáng 1-5/3", "Hàng ngày", "Mỗi tuần").
+- "date": Ngày thực hiện task (Định dạng "YYYY-MM-DD" chuẩn ISO). Trải dài task của bạn ra các ngày liên tiếp theo logic lộ trình.
+- "title": TÊN HÀNH ĐỘNG NGẮN GỌN. KHÔNG bỏ mô tả, ghi chú vào đây. CẤM ghi "4 giờ/ngày".
+- "description": GHI CHÚ / HƯỚNG DẪN cách làm chi tiết.
+- "energy_required": Số nguyên 1-5 thể hiện mức năng lượng cần thiết.
+
+Cấu trúc JSON bắt buộc:
 {
   "is_nonsense": false,
-  "title": "Tên mục tiêu bao quát nhất (dưới 10 chữ)",
-  "description": "Mô tả lộ trình CÁ NHÂN HÓA (1-2 câu, đánh giá tính khả thi dựa trên 5 dữ kiện)",
+  "title": "Tên mục tiêu bao quát nhất",
+  "description": "Mô tả lộ trình CÁ NHÂN HÓA",
   "target_date": "YYYY-MM-DD",
   "tasks": [
     {
-      "title": "Hành động cụ thể (VD: Học 30 từ vựng - Bắt đầu: 17:00 | Thời lượng: 1 giờ)",
-      "description": "Chi tiết cách làm ngắn gọn phù hợp trình độ và giải quyết khó khăn (1-2 câu)"
+      "date": "YYYY-MM-DD",
+      "title": "Học từ vựng IELTS chủ đề Education",
+      "description": "Bắt đầu: 08:00 | Thời lượng: 1 giờ\nChi tiết: Dùng app Anki hoặc Quizlet để học 30 từ mới. Luyện phát âm từng từ.",
+      "energy_required": 2
+    },
+    {
+      "date": "YYYY-MM-DD",
+      "title": "Làm test Reading Cam 18",
+      "description": "Bắt đầu: 14:00 | Thời lượng: 1.5 giờ\nChi tiết: Bấm giờ làm full test nghiêm túc, chú ý tránh bẫy Not Given.",
+      "energy_required": 4
     }
   ]
 }
-CHÚ Ý QUAN TRỌNG VỀ target_date: Nếu người dùng có nhắc đến ngày giờ cụ thể, hãy parse sang ISO 8601 (YYYY-MM-DD). Nếu họ không rõ ngày, hoặc nhập "Bỏ qua", hãy để giá trị này là "null" (không có string quote quanh null).
-CHÚ Ý QUAN TRỌNG: Chỉ trả về Object JSON hợp lệ. Không bọc trong \`\`\`json, không giải thích gì thêm.`
+CHÚ Ý: target_date nếu không xác định thì để rỗng "null". KHÔNG bọc JSON trong markdown \`\`\`json.`
 });
 
-/**
- * Endpoint khởi tạo lộ trình cá nhân hóa (Roadmap) thông qua Gemini 2.5 Flash.
- * Tích hợp dữ liệu lịch trình (Hard Constraints) để khóa ngày bận của user.
- */
 export async function POST(req: Request) {
   try {
     const supabase = await createClient();
@@ -88,16 +98,19 @@ export async function POST(req: Request) {
     let calendarContext = "Người dùng chưa cung cấp lịch trình cố định nào.";
 
     if (events && Array.isArray(events) && events.length > 0) {
-      const hardEvents = events.filter(e => e.is_hard_deadline);
+      const hardEvents = events.filter((e: any) => e.is_hard_deadline);
       if (hardEvents.length > 0) {
         calendarContext = "CẢNH BÁO - NGƯỜI DÙNG CÓ CÁC LỊCH TRÌNH VÀ DEADLINE CỐ ĐỊNH SAU:\n" +
-          hardEvents.map((e, idx) => `${idx + 1}. Ngày ${e.date}: ${e.title}`).join("\n") +
+          hardEvents.map((e: any, idx: number) => `${idx + 1}. Ngày ${e.date}: ${e.title}`).join("\n") +
           "\n\nLUẬT BẮT BUỘC: BẠN TUYỆT ĐỐI KHÔNG ĐƯỢC XẾP TASK TRÙNG VÀO CÁC NGÀY NÀY BỞI VÌ NGƯỜI DÙNG RẤT BẬN/STRESS. HÃY DỜI TASK SANG NGÀY KHÁC VÀ ÉP TIẾN ĐỘ TRƯỚC DEADLINE.";
       }
     }
 
     const conversationText = messages.map((m: any) => `${m.role === 'assistant' ? 'AI Coach' : 'User'}: ${m.content}`).join('\n\n');
-    const prompt = `Hôm nay là ngày: ${today}\n\nTHÔNG TIN LỊCH TRÌNH CÁ NHÂN (HARD CONSTRAINTS):\n${calendarContext}\n\n---\n\nDựa vào đoạn hội thoại và thông tin Lịch trình trên, hãy tạo lộ trình JSON:\n\n${conversationText}`;
+
+    /** Thêm instruction format ngày rõ ràng để AI lấy mốc thời gian */
+    const isoDate = new Date().toISOString().split('T')[0];
+    const prompt = `Hôm nay là ngày: ${today} (Định dạng ISO: ${isoDate})\n\nTHÔNG TIN LỊCH TRÌNH CÁ NHÂN (HARD CONSTRAINTS):\n${calendarContext}\n\n---\n\nDựa vào đoạn hội thoại và thông tin Lịch trình trên, hãy tạo lộ trình JSON:\n\n${conversationText}`;
 
     const result = await model.generateContent(prompt);
     let output = result.response.text().trim();

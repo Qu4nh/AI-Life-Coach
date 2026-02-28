@@ -37,7 +37,6 @@ export default function OnboardingPage() {
     };
 
     useEffect(() => {
-        if (typeof window !== 'undefined') localStorage.removeItem('ai-coach-tour-seen');
         scrollToBottom();
     }, [messages, isTyping]);
 
@@ -176,8 +175,13 @@ export default function OnboardingPage() {
                             onClick={async () => {
                                 setIsSaving(true);
                                 try {
-                                    await saveRoadmap(roadmapData);
-
+                                    const result = await saveRoadmap(roadmapData);
+                                    if (result?.success) {
+                                        window.location.href = '/dashboard';
+                                    } else {
+                                        alert(result?.error || 'Khởi tạo lỗi! Hãy chắc chắn bạn đã cài đặt Supabase CSDL.');
+                                        setIsSaving(false);
+                                    }
                                 } catch (error) {
                                     console.error(error);
                                     alert('Khởi tạo lỗi! Hãy chắc chắn bạn đã cài đặt Supabase CSDL.');

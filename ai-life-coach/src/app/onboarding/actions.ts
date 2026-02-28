@@ -2,23 +2,26 @@
 'use server'
 
 import { createClient } from '@/utils/supabase/server'
-import { redirect } from 'next/navigation'
+
+function getVietnamToday(): string {
+    return new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Ho_Chi_Minh' });
+}
 
 export async function saveRoadmap(roadmapData: any) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {
-        return redirect('/login')
+        return { success: false, error: 'Chưa đăng nhập' }
     }
 
-    try {
+    const today = getVietnamToday();
 
+    try {
         await supabase.from('profiles').upsert({
             id: user.id,
             email: user.email,
         }, { onConflict: 'id' })
-
 
         const { data: goal, error: goalError } = await supabase.from('goals').insert({
             user_id: user.id,
@@ -30,14 +33,19 @@ export async function saveRoadmap(roadmapData: any) {
 
         if (goalError) throw goalError
 
+        const tasksToInsert = roadmapData.tasks.map((task: any, index: number) => {
+            // Lấy ngày do AI phân bổ. Nếu AI không sinh field date hoặc sai format, fallback về today.
+            const taskDate = task.date && task.date.match(/^\d{4}-\d{2}-\d{2}$/) ? task.date : today;
 
-        const tasksToInsert = roadmapData.tasks.map((task: any, index: number) => ({
-            user_id: user.id,
-            goal_id: goal.id,
-            content: `${task.title} - ${task.description}`,
-            priority: index,
-            energy_required: 3,
-        }))
+            return {
+                user_id: user.id,
+                goal_id: goal.id,
+                content: `${task.title} - ${task.description}`,
+                priority: index,
+                energy_required: Math.min(5, Math.max(1, task.energy_required || 3)),
+                due_date: taskDate,
+            };
+        });
 
         const { error: tasksError } = await supabase.from('tasks').insert(tasksToInsert)
 
@@ -45,9 +53,8 @@ export async function saveRoadmap(roadmapData: any) {
 
     } catch (error) {
         console.error('Lỗi khi lưu Roadmap vào Supabase:', error)
-        throw new Error('Có lỗi xảy ra khi lưu Kế hoạch. Vui lòng thử lại.')
+        return { success: false, error: 'Có lỗi xảy ra khi lưu Kế hoạch. Vui lòng thử lại.' }
     }
 
-
-    redirect('/dashboard')
+    return { success: true }
 }

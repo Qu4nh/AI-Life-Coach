@@ -431,14 +431,16 @@ ${recentNotes || 'Không có ghi chú'}
 YÊU CẦU: Dựa trên tiến độ và năng lượng, hãy tạo danh sách task MỚI (thay thế hoàn toàn task pending cũ). Điều chỉnh độ khó phù hợp năng lượng.
 
 QUY TẮC FORMAT QUAN TRỌNG:
-- "title": CHỈ chứa TÊN NGẮN GỌN CỦA TASK và THỜI GIAN. KHÔNG được chèn ghi chú hay mô tả vào đây.
-- "description": Chứa GHI CHÚ hoặc MÔ TẢ chi tiết về cách thực hiện task.
-- KHÔNG BAO GIỜ nhồi description/note vào bên trong title.
+- CHIA NHỎ task ra TỪNG NGÀY CỤ THỂ (bắt đầu từ hôm nay ${today}, kéo dài nhiều ngày). Tối ưu task mỗi ngày.
+- "date": Ngày thực hiện task (format "YYYY-MM-DD" chuẩn ISO). Trải đều ra các ngày liên tiếp.
+- "title": CHỈ chứa TÊN NGẮN GỌN CỦA TASK. KHÔNG chèn ghi chú, mô tả hay giờ giấc vào đây.
+- "description": DÒNG ĐẦU TIÊN phải ghi "Bắt đầu: HH:MM | Thời lượng: X giờ/phút". Sau đó XUỐNG DÒNG rồi ghi "Chi tiết: <hướng dẫn cách làm>".
+- KHÔNG gộp nhiều ngày vào 1 task. CẤM dùng "Hàng ngày", "Mỗi tuần".
 
 CHỈ trả về JSON thuần (không markdown):
 {
   "tasks": [
-    { "title": "Tên task ngắn gọn (Bắt đầu: HH:MM | Thời lượng: X phút/giờ)", "description": "Ghi chú chi tiết hoặc hướng dẫn cách làm", "energy_required": 1-5 }
+    { "date": "YYYY-MM-DD", "title": "Tên task ngắn gọn", "description": "Bắt đầu: HH:MM | Thời lượng: X giờ\\nChi tiết: Hướng dẫn cách làm", "energy_required": 1-5 }
   ],
   "coach_note": "Một câu nhận xét ngắn về tiến độ"
 }`;
@@ -464,15 +466,18 @@ CHỈ trả về JSON thuần (không markdown):
         .eq('status', 'pending');
 
 
-    const newTasks = data.tasks.map((t: any, idx: number) => ({
-        user_id: user.id,
-        goal_id: activeGoal.id,
-        content: t.description ? `${t.title} - ${t.description}` : t.title,
-        priority: idx + 1,
-        energy_required: Math.min(5, Math.max(1, t.energy_required || 3)),
-        status: 'pending',
-        due_date: today,
-    }));
+    const newTasks = data.tasks.map((t: any, idx: number) => {
+        const taskDate = t.date && t.date.match(/^\d{4}-\d{2}-\d{2}$/) ? t.date : today;
+        return {
+            user_id: user.id,
+            goal_id: activeGoal.id,
+            content: t.description ? `${t.title} - ${t.description}` : t.title,
+            priority: idx + 1,
+            energy_required: Math.min(5, Math.max(1, t.energy_required || 3)),
+            status: 'pending',
+            due_date: taskDate,
+        };
+    });
 
     await supabase.from('tasks').insert(newTasks);
 

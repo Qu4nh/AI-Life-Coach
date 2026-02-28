@@ -165,7 +165,6 @@ export default function TaskCard({ task }: { task: any }) {
                         <motion.div style={{ opacity: opacityRightSignal }} className="absolute right-0 w-1/2 h-full bg-gradient-to-l from-rose-500/20 to-transparent pointer-events-none"></motion.div>
                     </div>
 
-
                     <motion.div
                         style={{ x, rotate }}
                         drag="x"
@@ -175,7 +174,7 @@ export default function TaskCard({ task }: { task: any }) {
                         animate={controls}
                         whileTap={{ scale: 0.98, cursor: 'grabbing' }}
                         whileHover={{ y: -2 }}
-                        className="relative z-20 liquid-glass-clear p-5 md:p-6 rounded-3xl flex items-center justify-between cursor-grab hover:brightness-110 transition-all overflow-hidden"
+                        className="relative z-20 liquid-glass-clear p-5 md:p-6 rounded-3xl flex items-center justify-between cursor-grab hover:brightness-110 transition-colors overflow-hidden"
                     >
                         <motion.div
                             style={{ opacity: opacityLeftSignal, scale: scaleLeftIcon }}
@@ -239,62 +238,64 @@ export default function TaskCard({ task }: { task: any }) {
                             <GripHorizontal className="w-5 h-5" />
                         </div>
                     </motion.div>
-                </motion.div>
-            )}
-
-            {phase === 'emoji' && (
-                <motion.div
-                    key="emoji"
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, height: 0, scale: 0.8, marginBottom: 0 }}
-                    transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-                    className="relative rounded-3xl liquid-glass p-5 overflow-hidden"
-                >
-                    <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/5 via-purple-500/5 to-rose-500/5 pointer-events-none"></div>
-
-                    <motion.div
-                        className="absolute bottom-0 left-0 h-[2px] bg-gradient-to-r from-indigo-400 to-purple-400"
-                        initial={{ width: '100%' }}
-                        animate={{ width: '0%' }}
-                        transition={{ duration: AUTO_DISMISS_MS / 1000, ease: 'linear' }}
-                    />
-
-                    <div className="relative z-10">
-                        <p className="text-center text-sm md:text-base text-white/70 mb-5 font-semibold tracking-wide">
-                            Năng lượng hiện tại của bạn?
-                        </p>
-                        <div className="flex justify-center gap-2 sm:gap-3">
-                            {REACTION_OPTIONS.map((opt) => (
-                                <motion.button
-                                    key={opt.level}
-                                    onClick={() => handleEmojiSelect(opt.level)}
-                                    whileHover={{ scale: 1.15, y: -2 }}
-                                    whileTap={{ scale: 0.9 }}
-                                    animate={selectedEmoji === opt.level
-                                        ? { scale: 1.25, y: -4, opacity: 1 }
-                                        : selectedEmoji !== null
-                                            ? { opacity: 0.3, scale: 0.9 }
-                                            : { opacity: 1, scale: 1 }
-                                    }
-                                    className={`flex flex-col items-center gap-1.5 p-2 sm:p-3 rounded-2xl transition-colors shrink-0 ${selectedEmoji === opt.level
-                                        ? 'bg-indigo-500/20 border border-indigo-500/30 shadow-lg shadow-indigo-500/10'
-                                        : 'bg-white/5 hover:bg-white/10 border border-transparent hover:border-white/10'
-                                        }`}
-                                >
-                                    <opt.icon className={`w-6 h-6 sm:w-7 sm:h-7 ${opt.level === 1 ? 'text-rose-500' :
-                                        opt.level === 2 ? 'text-orange-400' :
-                                            opt.level === 3 ? 'text-amber-400' :
-                                                opt.level === 4 ? 'text-emerald-400' :
-                                                    'text-cyan-400'
-                                        }`} />
-                                    <span className="text-[9px] sm:text-[10px] text-white/50 font-medium tracking-wide">{opt.label}</span>
-                                </motion.button>
-                            ))}
-                        </div>
-                    </div>
-                </motion.div>
+                </motion.div >
             )
+            }
+
+            {
+                phase === 'emoji' && (
+                    <motion.div
+                        key="emoji"
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, height: 0, scale: 0.8, marginBottom: 0 }}
+                        transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+                        className="relative rounded-3xl liquid-glass p-5 overflow-hidden"
+                    >
+                        <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/5 via-purple-500/5 to-rose-500/5 pointer-events-none"></div>
+
+                        <motion.div
+                            className="absolute bottom-0 left-0 h-[2px] bg-gradient-to-r from-indigo-400 to-purple-400"
+                            initial={{ width: '100%' }}
+                            animate={{ width: '0%' }}
+                            transition={{ duration: AUTO_DISMISS_MS / 1000, ease: 'linear' }}
+                        />
+
+                        <div className="relative z-10">
+                            <p className="text-center text-sm md:text-base text-white/70 mb-5 font-semibold tracking-wide">
+                                Năng lượng hiện tại của bạn?
+                            </p>
+                            <div className="flex justify-center gap-2 sm:gap-3">
+                                {REACTION_OPTIONS.map((opt) => (
+                                    <motion.button
+                                        key={opt.level}
+                                        onClick={() => handleEmojiSelect(opt.level)}
+                                        whileHover={{ scale: 1.15, y: -2 }}
+                                        whileTap={{ scale: 0.9 }}
+                                        animate={selectedEmoji === opt.level
+                                            ? { scale: 1.25, y: -4, opacity: 1 }
+                                            : selectedEmoji !== null
+                                                ? { opacity: 0.3, scale: 0.9 }
+                                                : { opacity: 1, scale: 1 }
+                                        }
+                                        className={`flex flex-col items-center gap-1.5 p-2 sm:p-3 rounded-2xl transition-colors shrink-0 ${selectedEmoji === opt.level
+                                            ? 'bg-indigo-500/20 border border-indigo-500/30 shadow-lg shadow-indigo-500/10'
+                                            : 'bg-white/5 hover:bg-white/10 border border-transparent hover:border-white/10'
+                                            }`}
+                                    >
+                                        <opt.icon className={`w-6 h-6 sm:w-7 sm:h-7 ${opt.level === 1 ? 'text-rose-500' :
+                                            opt.level === 2 ? 'text-orange-400' :
+                                                opt.level === 3 ? 'text-amber-400' :
+                                                    opt.level === 4 ? 'text-emerald-400' :
+                                                        'text-cyan-400'
+                                            }`} />
+                                        <span className="text-[9px] sm:text-[10px] text-white/50 font-medium tracking-wide">{opt.label}</span>
+                                    </motion.button>
+                                ))}
+                            </div>
+                        </div>
+                    </motion.div>
+                )
             }
         </AnimatePresence >
     );
