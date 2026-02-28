@@ -65,11 +65,12 @@ export default function TaskCard({ task }: { task: any }) {
 
 
     const x = useMotionValue(0);
-    const rotate = useTransform(x, [-200, 200], [-8, 8]);
-    const opacityLeftSignal = useTransform(x, [-50, -150], [0, 1]);
-    const opacityRightSignal = useTransform(x, [50, 150], [0, 1]);
-    const scaleLeftIcon = useTransform(x, [-50, -150], [0.8, 1.2]);
-    const scaleRightIcon = useTransform(x, [50, 150], [0.8, 1.2]);
+    const rotate = useTransform(x, [-250, 250], [-12, 12]);
+    const backgroundScale = useTransform(x, [-200, 0, 200], [0.97, 1, 0.97]);
+    const opacityLeftSignal = useTransform(x, [-30, -120], [0, 1]);
+    const opacityRightSignal = useTransform(x, [30, 120], [0, 1]);
+    const scaleLeftIcon = useTransform(x, [-30, -120], [0.6, 1.3]);
+    const scaleRightIcon = useTransform(x, [30, 120], [0.6, 1.3]);
 
     // Xử lý logic vuốt (swipe-to-action) qua Framer Motion.
     // Kết hợp độ lệch (offset) và gia tốc (velocity) để phán đoán thao tác người dùng (Vuốt hoàn thành / Dời lịch).
@@ -86,13 +87,13 @@ export default function TaskCard({ task }: { task: any }) {
             lastAction.current = 'reschedule';
             await handleAction('reschedule', throwX);
         } else {
-            controls.start({ x: 0, opacity: 1, rotate: 0 });
+            controls.start({ x: 0, opacity: 1, rotate: 0, scale: 1, transition: { type: 'spring', stiffness: 500, damping: 30 } });
         }
     };
 
     const handleAction = async (action: 'completed' | 'reschedule' | 'delete', throwX: number = 0) => {
         if (action !== 'delete') {
-            await controls.start({ x: throwX, opacity: 0, scale: 0.9, transition: { type: 'spring', stiffness: 200, damping: 25 } });
+            await controls.start({ x: throwX, opacity: 0, scale: 0.8, rotate: throwX > 0 ? 15 : -15, transition: { type: 'spring', stiffness: 300, damping: 28, mass: 0.8 } });
         } else {
             await controls.start({ scale: 0.8, opacity: 0 });
         }
@@ -155,8 +156,9 @@ export default function TaskCard({ task }: { task: any }) {
             {phase === 'card' && (
                 <motion.div
                     key="card"
-                    exit={{ opacity: 0, height: 0, marginBottom: 0 }}
-                    transition={{ duration: 0.3 }}
+                    style={{ scale: backgroundScale }}
+                    exit={{ opacity: 0, height: 0, marginBottom: 0, scale: 0.9 }}
+                    transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
                     className="relative group"
                 >
 
@@ -170,10 +172,11 @@ export default function TaskCard({ task }: { task: any }) {
                         drag="x"
                         dragConstraints={{ left: 0, right: 0 }}
                         dragElastic={1}
+                        dragTransition={{ bounceStiffness: 300, bounceDamping: 20 }}
                         onDragEnd={handleDragEnd}
                         animate={controls}
-                        whileTap={{ scale: 0.98, cursor: 'grabbing' }}
-                        whileHover={{ y: -2 }}
+                        whileTap={{ scale: 0.97, cursor: 'grabbing' }}
+                        whileHover={{ y: -2, transition: { duration: 0.2 } }}
                         className="relative z-20 liquid-glass-clear p-5 md:p-6 rounded-3xl flex items-center justify-between cursor-grab hover:brightness-110 transition-colors overflow-hidden"
                     >
                         <motion.div

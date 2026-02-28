@@ -29,14 +29,13 @@ export default function DeleteGoalButton({ goalId }: { goalId: string }) {
             setShowConfirm(false);
         }
     };
-
     return (
         <>
             <button
                 onClick={() => setShowConfirm(true)}
                 disabled={isPending}
                 title="Xóa Mục Tiêu"
-                className="p-1.5 text-white/15 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-all opacity-0 group-hover:opacity-100 focus:opacity-100"
+                className="p-1.5 text-white/40 sm:text-white/15 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-all opacity-100 sm:opacity-0 group-hover:opacity-100 focus:opacity-100"
             >
                 {isPending ? (
                     <div className="w-3.5 h-3.5 rounded-full border-2 border-rose-300 border-t-transparent animate-spin"></div>

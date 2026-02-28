@@ -496,8 +496,8 @@ export default function GuidedTour() {
                                 animate={{
                                     opacity: 1,
                                     scale: 1,
-                                    x: (current.position === 'center' || !current.target) ? '-50%' : 0,
-                                    y: (current.position === 'center' || !current.target) ? '-50%' : 0
+                                    x: (current.position === 'center' || !current.target || !spotlightRect) ? '-50%' : 0,
+                                    y: (current.position === 'center' || !current.target || !spotlightRect) ? '-50%' : 0
                                 }}
                                 exit={{ opacity: 0, scale: 0.95 }}
                                 transition={{ type: 'spring', stiffness: 400, damping: 30 }}
