@@ -75,6 +75,7 @@ export async function deleteEvent(eventId: string) {
     return { success: true };
 }
 
+// Auto-create default goal if user has no goals (prevents FK constraint violation on task insert)
 export async function createCalendarTask(title: string, note: string, dateStr: string, energy: number) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -83,21 +84,35 @@ export async function createCalendarTask(title: string, note: string, dateStr: s
         throw new Error('Not authenticated');
     }
 
-    
     const { data: goals } = await supabase
         .from('goals')
         .select('id')
         .eq('user_id', user.id)
         .limit(1);
 
-    const goalId = goals && goals.length > 0 ? goals[0].id : null;
+    let goalId = goals && goals.length > 0 ? goals[0].id : null;
+
+    // Fallback: auto-create a default goal to satisfy FK constraint
+    if (!goalId) {
+        const { data: newGoal, error: goalError } = await supabase
+            .from('goals')
+            .insert({ user_id: user.id, title: 'Mục tiêu cá nhân' })
+            .select('id')
+            .single();
+
+        if (goalError || !newGoal) {
+            console.error('Error creating default goal:', JSON.stringify(goalError, null, 2));
+            throw new Error('Không thể tạo mục tiêu mặc định. Vui lòng thử lại.');
+        }
+        goalId = newGoal.id;
+    }
 
     let content = title;
     if (note && note.trim() !== '') {
         content = `${title} - ${note}`;
     }
 
-    const { error } = await supabase
+    const { data: newTask, error } = await supabase
         .from('tasks')
         .insert({
             user_id: user.id,
@@ -107,7 +122,9 @@ export async function createCalendarTask(title: string, note: string, dateStr: s
             priority: 2,
             due_date: dateStr,
             status: 'pending'
-        });
+        })
+        .select()
+        .single();
 
     if (error) {
         console.error('Error creating task from calendar:', JSON.stringify(error, null, 2));
@@ -115,7 +132,7 @@ export async function createCalendarTask(title: string, note: string, dateStr: s
     }
 
     revalidatePath('/dashboard');
-    return { success: true };
+    return { success: true, task: newTask };
 }
 
 export async function deleteCalendarTask(taskId: string) {

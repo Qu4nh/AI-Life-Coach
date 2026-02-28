@@ -889,124 +889,123 @@ export default function CalendarWidget({ initialEvents }: CalendarWidgetProps) {
                                 initial={{ opacity: 0, scale: 0.95, y: 20 }}
                                 animate={{ opacity: 1, scale: 1, y: 0 }}
                                 exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                                className="relative w-full max-w-lg bg-[#1e1e24] border border-white/10 rounded-3xl overflow-y-auto max-h-[90vh] custom-scrollbar shadow-2xl z-10 p-6 md:p-8"
+                                className="relative w-full max-w-lg bg-[#1e1e24] border border-white/10 rounded-3xl shadow-2xl z-10 flex flex-col max-h-[90vh]"
                             >
-                                <button
-                                    onClick={() => setEditingEvent(null)}
-                                    className="absolute top-6 right-6 p-2 hover:bg-white/10 text-white/50 hover:text-white rounded-full transition-colors"
-                                >
-                                    <X className="w-5 h-5" />
-                                </button>
+                                <div className="flex items-center justify-between p-6 md:p-8 pb-4 shrink-0">
+                                    <h3 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-emerald-400 drop-shadow-sm">
+                                        Chỉnh sửa {editingEvent?.is_task ? 'Nhiệm vụ' : 'Sự kiện'}
+                                    </h3>
+                                    <button type="button" onClick={() => setEditingEvent(null)} className="p-2 hover:bg-white/10 text-white/50 hover:text-white rounded-full transition-colors bg-black/20 sm:bg-transparent shrink-0">
+                                        <X className="w-5 h-5" />
+                                    </button>
+                                </div>
+                                <div className="overflow-y-auto custom-scrollbar px-6 md:px-8 pb-6 md:pb-8">
+                                    <form onSubmit={handleSaveEdit} className="space-y-5">
+                                        <div>
+                                            <label className="block text-sm font-medium text-white/70 mb-2">Tên {editingEvent?.is_task ? 'nhiệm vụ' : 'sự kiện'}</label>
+                                            <input
+                                                type="text"
+                                                value={editEventTitle}
+                                                onChange={(e) => setEditEventTitle(e.target.value)}
+                                                className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-shadow"
+                                            />
+                                        </div>
 
-                                <h3 className="text-2xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-emerald-400 drop-shadow-sm">
-                                    Chỉnh sửa {editingEvent?.is_task ? 'Nhiệm vụ' : 'Sự kiện'}
-                                </h3>
-
-                                <form onSubmit={handleSaveEdit} className="space-y-5">
-                                    <div>
-                                        <label className="block text-sm font-medium text-white/70 mb-2">Tên {editingEvent?.is_task ? 'nhiệm vụ' : 'sự kiện'}</label>
-                                        <input
-                                            type="text"
-                                            value={editEventTitle}
-                                            onChange={(e) => setEditEventTitle(e.target.value)}
-                                            className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-shadow"
-                                        />
-                                    </div>
-
-                                    {editingEvent?.is_task ? (
-                                        <>
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <div>
-                                                    <label className="block text-sm font-medium text-white/70 mb-2">Bắt đầu lúc</label>
-                                                    <IOSTimePicker value={editStartTime || ''} onChange={(val) => setEditStartTime(val || '')} />
+                                        {editingEvent?.is_task ? (
+                                            <>
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div>
+                                                        <label className="block text-sm font-medium text-white/70 mb-2">Bắt đầu lúc</label>
+                                                        <IOSTimePicker value={editStartTime || ''} onChange={(val) => setEditStartTime(val || '')} />
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-sm font-medium text-white/70 mb-2">Thời lượng</label>
+                                                        <CustomDropdown value={editDuration} onChange={setEditDuration} options={durationOptions} placeholder="Tùy tâm" />
+                                                    </div>
                                                 </div>
-                                                <div>
-                                                    <label className="block text-sm font-medium text-white/70 mb-2">Thời lượng</label>
-                                                    <CustomDropdown value={editDuration} onChange={setEditDuration} options={durationOptions} placeholder="Tùy tâm" />
-                                                </div>
-                                            </div>
 
-                                            <div>
-                                                <label className="block text-sm font-medium text-white/70 mb-2 flex justify-between">
-                                                    <span>Năng lượng tiêu hao</span>
-                                                    <div className={`flex items-center gap-1.5 px-2 py-1 bg-black/20 rounded-lg border backdrop-blur-md transition-colors ${Math.round(editEnergy) > 3 ? 'border-rose-500/20 text-rose-300' : Math.round(editEnergy) === 3 ? 'border-amber-500/20 text-amber-300' : 'border-emerald-500/20 text-emerald-300'}`}>
-                                                        {Math.round(editEnergy) === 1 && <BatteryWarning className="w-4 h-4" />}
-                                                        {Math.round(editEnergy) === 2 && <BatteryLow className="w-4 h-4" />}
-                                                        {Math.round(editEnergy) === 3 && <BatteryMedium className="w-4 h-4" />}
-                                                        {Math.round(editEnergy) === 4 && <BatteryFull className="w-4 h-4" />}
-                                                        {Math.round(editEnergy) === 5 && <BatteryCharging className="w-4 h-4" />}
-                                                        <div className="flex gap-0.5 ml-0.5">
-                                                            {[1, 2, 3, 4, 5].map(i => (
-                                                                <div key={i} className={`w-1.5 h-2.5 rounded-[1px] ${i <= Math.round(editEnergy) ? 'bg-current' : 'bg-current opacity-20'}`} />
-                                                            ))}
+                                                <div>
+                                                    <label className="block text-sm font-medium text-white/70 mb-2 flex justify-between">
+                                                        <span>Năng lượng tiêu hao</span>
+                                                        <div className={`flex items-center gap-1.5 px-2 py-1 bg-black/20 rounded-lg border backdrop-blur-md transition-colors ${Math.round(editEnergy) > 3 ? 'border-rose-500/20 text-rose-300' : Math.round(editEnergy) === 3 ? 'border-amber-500/20 text-amber-300' : 'border-emerald-500/20 text-emerald-300'}`}>
+                                                            {Math.round(editEnergy) === 1 && <BatteryWarning className="w-4 h-4" />}
+                                                            {Math.round(editEnergy) === 2 && <BatteryLow className="w-4 h-4" />}
+                                                            {Math.round(editEnergy) === 3 && <BatteryMedium className="w-4 h-4" />}
+                                                            {Math.round(editEnergy) === 4 && <BatteryFull className="w-4 h-4" />}
+                                                            {Math.round(editEnergy) === 5 && <BatteryCharging className="w-4 h-4" />}
+                                                            <div className="flex gap-0.5 ml-0.5">
+                                                                {[1, 2, 3, 4, 5].map(i => (
+                                                                    <div key={i} className={`w-1.5 h-2.5 rounded-[1px] ${i <= Math.round(editEnergy) ? 'bg-current' : 'bg-current opacity-20'}`} />
+                                                                ))}
+                                                            </div>
                                                         </div>
+                                                    </label>
+                                                    <input
+                                                        type="range"
+                                                        min="1"
+                                                        max="5"
+                                                        step="0.1"
+                                                        value={editEnergy}
+                                                        onChange={(e) => setEditEnergy(Number(e.target.value))}
+                                                        className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+                                                    />
+                                                    <div className="flex justify-between text-xs text-white/40 mt-2 px-1">
+                                                        <span>Siêu Nhẹ</span>
+                                                        <span>Trung bình</span>
+                                                        <span>Vắt kiệt</span>
+                                                    </div>
+                                                </div>
+                                            </>
+                                        ) : (
+                                            <div className={`border rounded-xl p-4 cursor-pointer transition-colors ${editIsHardDeadline ? 'bg-red-500/10 border-red-500/30' : 'bg-white/5 border-white/10 hover:bg-white/10'}`}>
+                                                <label className="flex items-start gap-3 cursor-pointer">
+                                                    <div className="mt-0.5 pointer-events-none">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={editIsHardDeadline}
+                                                            readOnly
+                                                            className="w-5 h-5 rounded border-white/20 bg-black/40 text-red-500 focus:ring-red-500/50"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <span className={`block font-medium ${editIsHardDeadline ? 'text-red-400' : 'text-white/80'}`}>
+                                                            Đánh dấu là Deadline Cứng (Cảnh Báo)
+                                                        </span>
                                                     </div>
                                                 </label>
-                                                <input
-                                                    type="range"
-                                                    min="1"
-                                                    max="5"
-                                                    step="0.1"
-                                                    value={editEnergy}
-                                                    onChange={(e) => setEditEnergy(Number(e.target.value))}
-                                                    className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer accent-indigo-500"
-                                                />
-                                                <div className="flex justify-between text-xs text-white/40 mt-2 px-1">
-                                                    <span>Siêu Nhẹ</span>
-                                                    <span>Trung bình</span>
-                                                    <span>Vắt kiệt</span>
-                                                </div>
                                             </div>
-                                        </>
-                                    ) : (
-                                        <div className={`border rounded-xl p-4 cursor-pointer transition-colors ${editIsHardDeadline ? 'bg-red-500/10 border-red-500/30' : 'bg-white/5 border-white/10 hover:bg-white/10'}`}>
-                                            <label className="flex items-start gap-3 cursor-pointer">
-                                                <div className="mt-0.5 pointer-events-none">
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={editIsHardDeadline}
-                                                        readOnly
-                                                        className="w-5 h-5 rounded border-white/20 bg-black/40 text-red-500 focus:ring-red-500/50"
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <span className={`block font-medium ${editIsHardDeadline ? 'text-red-400' : 'text-white/80'}`}>
-                                                        Đánh dấu là Deadline Cứng (Cảnh Báo)
-                                                    </span>
-                                                </div>
-                                            </label>
+                                        )}
+
+                                        <div>
+                                            <label className="block text-sm font-medium text-white/70 mb-2">Ghi chú chi tiết</label>
+                                            <textarea
+                                                value={editNote}
+                                                onChange={(e) => setEditNote(e.target.value)}
+                                                className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 min-h-[100px] resize-none"
+                                                placeholder="Nhập ghi chú hoặc mô tả..."
+                                            />
                                         </div>
-                                    )}
 
-                                    <div>
-                                        <label className="block text-sm font-medium text-white/70 mb-2">Ghi chú chi tiết</label>
-                                        <textarea
-                                            value={editNote}
-                                            onChange={(e) => setEditNote(e.target.value)}
-                                            className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 min-h-[100px] resize-none"
-                                            placeholder="Nhập ghi chú hoặc mô tả..."
-                                        />
-                                    </div>
+                                        <div className="pt-4 border-t border-white/10 flex justify-between items-center gap-4">
+                                            <button
+                                                type="button"
+                                                onClick={confirmDeleteEditing}
+                                                className="flex items-center gap-2 px-4 py-3 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-xl transition-colors font-medium border border-rose-500/20"
+                                            >
+                                                <Trash2 className="w-4 h-4" /> Xóa
+                                            </button>
 
-                                    <div className="pt-4 border-t border-white/10 flex justify-between items-center gap-4">
-                                        <button
-                                            type="button"
-                                            onClick={confirmDeleteEditing}
-                                            className="flex items-center gap-2 px-4 py-3 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-xl transition-colors font-medium border border-rose-500/20"
-                                        >
-                                            <Trash2 className="w-4 h-4" /> Xóa
-                                        </button>
-
-                                        <button
-                                            type="submit"
-                                            disabled={editSubmitting || !editEventTitle.trim()}
-                                            className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-indigo-500 hover:bg-indigo-600 disabled:bg-indigo-500/50 text-white rounded-xl transition-colors font-medium shadow-lg shadow-indigo-500/25"
-                                        >
-                                            {editSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Check className="w-5 h-5" />}
-                                            Lưu Thay Đổi
-                                        </button>
-                                    </div>
-                                </form>
+                                            <button
+                                                type="submit"
+                                                disabled={editSubmitting || !editEventTitle.trim()}
+                                                className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-indigo-500 hover:bg-indigo-600 disabled:bg-indigo-500/50 text-white rounded-xl transition-colors font-medium shadow-lg shadow-indigo-500/25"
+                                            >
+                                                {editSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Check className="w-5 h-5" />}
+                                                Lưu Thay Đổi
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
                             </motion.div>
                         </div>
                     )}
@@ -1027,3 +1026,4 @@ export default function CalendarWidget({ initialEvents }: CalendarWidgetProps) {
         </div>
     );
 }
+
