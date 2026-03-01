@@ -43,7 +43,7 @@ export default function OnboardingPage() {
         "Gần xong rồi, lộ trình dài hạn đang thành hình...",
         "Xin chờ một chút, đang tinh chỉnh bước cuối...",
         "Nà Ná Na Na ....",
-        "Tips: Đừng lo, task mới sẽ được thêm khi tổng kết tuần",
+        "Đừng lo, task mới sẽ được thêm khi tổng kết tuần",
         "Đang cook cho bạn một lộ trình xịn xò..."
     ];
 
