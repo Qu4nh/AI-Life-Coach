@@ -47,7 +47,8 @@ Mục tiêu: Giúp người dùng HOÀN THÀNH được mục tiêu một cách 
 === QUY TẮC PHÂN BỔ TASKS - LINH HOẠT & CÁ NHÂN HÓA ===
 - BẠN PHẢI CHIA NHỎ LỘ TRÌNH RA THÀNH TỪNG NGÀY CỤ THỂ (Bắt đầu từ ngày hôm nay).
 - KHÔNG ĐƯỢC gộp nhiều ngày vào 1 task (CẤM dùng "Sáng 1-5/3", "Hàng ngày", "Mỗi tuần").
-- SỐ LƯỢNG TASKS: KHÔNG DƯỚI 20 TASKS
+- SỐ LƯỢNG TASKS: KHÔNG DƯỚI 20 TASKS và KHÔNG QUÁ 50 TASKS
+- NẾU LỊCH TRÌNH DÀI HẠN THÌ CHỈ TẠO TRƯỚC VÀI TUẦN (LỚN HƠN 4 TUẦN) ĐẦU TIÊN.
 - PHÂN BỔ LINH HOẠT, CÁ NHÂN HÓA theo bản chất mục tiêu:
   + CÓ ngày 0 task (ngày nghỉ xen kẽ để phục hồi năng lượng, đặc biệt sau 2-3 ngày làm việc liên tục).
   + CÓ ngày chỉ 1 task nhẹ (Micro-action: 5-15 phút, energy 1-2. VD: xem lại ghi chú, nghe podcast).

@@ -12,9 +12,7 @@ export default function NightReflection({ hasTasks }: { hasTasks: boolean }) {
         if (!hasTasks) {
             e.preventDefault();
 
-            // Trigger confetti from the bottom center
             const rect = containerRef.current?.getBoundingClientRect();
-            // Origin uses percentages of screen 0-1
             const yOrigin = rect ? (rect.top + rect.height / 2) / window.innerHeight : 0.9;
             const xOrigin = rect ? (rect.left + rect.width / 2) / window.innerWidth : 0.5;
 
@@ -42,7 +40,7 @@ export default function NightReflection({ hasTasks }: { hasTasks: boolean }) {
                         exit={{ opacity: 0, y: 10, scale: 0.95 }}
                         className="bg-indigo-900/80 backdrop-blur-md border border-indigo-500/30 text-indigo-100 px-5 py-2.5 rounded-full shadow-xl shadow-indigo-500/20 text-sm font-medium pointer-events-auto"
                     >
-                        Tính năng Nhật ký AI đang được phát triển...
+                        Tính năng Nhật ký AI đang được phát triển... :3
                     </motion.div>
                 )}
             </AnimatePresence>

@@ -3,7 +3,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, User, Bot, Sparkles, ChevronRight, Target, CheckCircle2, Loader2 } from 'lucide-react';
+import { Send, User, Bot, Sparkles, ChevronRight, Target, CheckCircle2, Loader2, Info } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { saveRoadmap } from './actions';
 import { useRouter } from 'next/navigation';
@@ -21,7 +21,7 @@ export default function OnboardingPage() {
         {
             id: '1',
             role: 'assistant',
-            content: 'Chào bạn! Mình là AI Life Coach. Để bắt đầu, bạn hãy cho mình biết mục tiêu bạn muốn đạt được trong thời gian tới là gì nhé?',
+            content: 'Chào bạn! Mình là **AI Life Coach**. Để bắt đầu, bạn hãy cho mình biết **mục tiêu** bạn muốn đạt được trong thời gian tới là gì nhé?',
         }
     ]);
     const [input, setInput] = useState('');
@@ -31,6 +31,34 @@ export default function OnboardingPage() {
     const [isSaving, setIsSaving] = useState(false);
     const [roadmapData, setRoadmapData] = useState<any>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
+
+    // States for rotating loading messages
+    const [loadingMessageIndex, setLoadingMessageIndex] = useState(0);
+
+    const LOADING_MESSAGES = [
+        "Đang khởi động cỗ máy AI để phân tích...",
+        "Đang rà soát năng lượng và lịch trình cá nhân...",
+        "Tính toán số lượng task phù hợp để không bị mệt...",
+        "Đang phân bổ nhịp nghỉ ngơi xen kẽ hợp lý...",
+        "Tìm giải pháp cho những khó khăn tiềm ẩn...",
+        "Gần xong rồi, lộ trình dài hạn đang thành hình...",
+        "Xin chờ một chút, đang tinh chỉnh bước cuối...",
+        "Nà Ná Na Na ....",
+        "Tips: Hệ thống sẽ tạo lộ trình vài tuần, đừng lo, task mới sẽ được thêm khi tổng kết tuần",
+        "Đang cook cho bạn một lộ trình xịn xò..."
+    ];
+
+    useEffect(() => {
+        let interval: NodeJS.Timeout;
+        if (isGeneratingRoadmap) {
+            interval = setInterval(() => {
+                setLoadingMessageIndex((prev) => (prev + 1) % LOADING_MESSAGES.length);
+            }, 5000);
+        } else {
+            setLoadingMessageIndex(0);
+        }
+        return () => clearInterval(interval);
+    }, [isGeneratingRoadmap]);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -60,13 +88,13 @@ export default function OnboardingPage() {
             let nextStep = step + 1;
 
             if (step === 0) {
-                botResponse = 'Cho mình hỏi thêm, bạn dự định dành **bao nhiêu thời gian** (vd: 1 tháng, 3 tháng) hoặc thời lượng mỗi ngày (vd: 30 phút/ngày) cho mục tiêu này? ⏰';
+                botResponse = 'Tiếp theo, bạn muốn hoàn thành mục tiêu này vào **ngày bao nhiêu**? (Vd: 31/12/2026. Nếu chưa có ngày cụ thể, cứ gõ "Bỏ qua" để hệ thống tự tính nhé) 📅';
             } else if (step === 1) {
-                botResponse = 'Tiếp theo, bạn hoàn thành mục tiêu này vào **ngày bao nhiêu**? (Vd: 31/12/2026. Nếu chưa có ngày cụ thể, cứ gõ "Bỏ qua" để hệ thống tự tính nhé) 📅';
+                botResponse = 'Cho mình hỏi thêm, bạn có thể dành **thời lượng mỗi ngày** (vd: 30 phút/ngày hoặc 1 giờ/ngày) cho mục tiêu này là bao nhiêu? ⏰';
             } else if (step === 2) {
-                botResponse = 'Chốt! Vậy **độ quen thuộc** của bạn với lĩnh vực này thế nào? (vd: người mới bắt đầu bảng chữ cái, đã có nền tảng, học lại từ đầu...) 🎓';
+                botResponse = 'Chốt! Vậy **độ quen thuộc** của bạn với lĩnh vực này thế nào? (vd: người mới bắt đầu bảng chữ cái, đã có nền tảng, học lại từ đầu, đã học đến...) 🎓';
             } else if (step === 3) {
-                botResponse = 'Cuối cùng, bạn có muốn chia sẻ **thêm thông tin, hoặc khó khăn dự kiến** nào không? (vd: mình khá lười, hay mất tập trung, bận con nhỏ...) 💬';
+                botResponse = 'Cuối cùng, bạn có muốn chia sẻ **thêm thông tin, hoặc khó khăn dự kiến** nào không? Cứ chia sẻ thoải mái với mình nhé (vd: mình khá lười, hay mất tập trung, học cấp tốc...) 💬';
             } else {
                 botResponse = 'Tuyệt vời! Mình đã ghi nhận đủ 5 thông tin cốt lõi:\n- Mục tiêu\n- Thời lượng\n- Ngày hẹn chót\n- Trình độ\n- Ngữ cảnh khác\n\nBây giờ, hãy nhấn nút **"Chốt Lộ Trình Ngay!"** bên dưới để Bộ não AI tiếp nhận và phân tích kế hoạch chi tiết cho bạn nhé. 🚀';
             }
@@ -167,6 +195,14 @@ export default function OnboardingPage() {
                                 </div>
                             ))}
                         </div>
+
+                        <div className="mt-8 p-4 bg-indigo-500/10 border border-indigo-500/20 rounded-xl flex items-start gap-3">
+                            <Info className="w-5 h-5 text-indigo-400 shrink-0 mt-0.5" />
+                            <div className="text-sm text-indigo-200/80 leading-relaxed">
+                                <strong className="text-indigo-300 block mb-1">Tại sao Lộ trình này trông có vẻ ngắn?</strong>
+                                Để đảm bảo chất lượng công việc luôn sát với năng lực thực tế, AI Life Coach sẽ chỉ tạo trước cho bạn lịch trình của **vài tuần đầu tiên**. Bạn cứ yên tâm bắt tay vào làm nhé! Hàng tuần khi bạn phản tư (Night Reflection), hệ thống sẽ động não để tiếp tục **tạo thêm các task mới** phù hợp cho chặng đường tiếp theo.
+                            </div>
+                        </div>
                     </div>
 
                     <div className="pb-12">
@@ -200,7 +236,7 @@ export default function OnboardingPage() {
     }
 
     return (
-        <div className="relative min-h-screen flex flex-col bg-neutral-900 overflow-hidden font-sans text-white">
+        <div className="relative h-[100dvh] flex flex-col bg-neutral-900 overflow-hidden font-sans text-white">
 
             <div className="absolute top-0 left-[-10%] w-[500px] h-[500px] bg-indigo-600 rounded-full mix-blend-screen filter blur-[100px] opacity-20 animate-blob"></div>
             <div className="absolute bottom-0 right-[-10%] w-[500px] h-[500px] bg-rose-600 rounded-full mix-blend-screen filter blur-[100px] opacity-20 animate-blob animation-delay-2000"></div>
@@ -218,113 +254,165 @@ export default function OnboardingPage() {
                         </div>
                     </div>
 
-                    <button
-                        onClick={() => router.push('/dashboard')}
-                        className="text-sm px-4 py-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 transition-colors flex items-center gap-1"
-                    >
-                        Bỏ qua <ChevronRight className="w-4 h-4" />
-                    </button>
-
+                    {!isGeneratingRoadmap && (
+                        <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => router.push('/dashboard')}
+                            className="text-sm px-4 py-2 rounded-full bg-white/5 hover:bg-white/15 border border-white/10 transition-colors flex items-center gap-1 active:bg-white/20"
+                        >
+                            Bỏ qua <ChevronRight className="w-4 h-4" />
+                        </motion.button>
+                    )}
                 </div>
             </header>
 
 
             <main className="relative z-10 flex-1 overflow-y-auto px-4 py-8 custom-scrollbar">
                 <div className="max-w-2xl mx-auto space-y-6">
-                    <AnimatePresence initial={false}>
-                        {messages.map((msg) => (
-                            <motion.div
-                                key={msg.id}
-                                initial={{ opacity: 0, y: 15, scale: 0.95 }}
-                                animate={{ opacity: 1, y: 0, scale: 1 }}
-                                transition={{ duration: 0.4, type: 'spring', bounce: 0.3 }}
-                                className={`flex w-full ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                            >
-                                <div className={`flex gap-3 max-w-[85%] ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
 
-                                    <div className={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center border shadow-sm ${msg.role === 'assistant'
-                                        ? 'bg-indigo-500/20 border-indigo-500/30 text-indigo-300'
-                                        : 'bg-white/10 border-white/20 text-white/70'
-                                        }`}>
-                                        {msg.role === 'assistant' ? <Bot className="w-4 h-4" /> : <User className="w-4 h-4" />}
-                                    </div>
-
-
-                                    <div className={`px-5 py-3.5 rounded-2xl shadow-lg border backdrop-blur-md ${msg.role === 'user'
-                                        ? 'bg-white/10 border-white/15 text-white rounded-tr-sm'
-                                        : 'bg-indigo-900/30 border-indigo-500/20 text-indigo-50 rounded-tl-sm'
-                                        }`}>
-                                        <div className="text-sm md:text-base leading-relaxed whitespace-pre-wrap">
-                                            <ReactMarkdown
-                                                components={{
-                                                    p: ({ node, ...props }) => <p className="mb-2 last:mb-0" {...props} />,
-                                                    ul: ({ node, ...props }) => <ul className="list-disc pl-5 mb-2 ml-2 space-y-1" {...props} />,
-                                                    ol: ({ node, ...props }) => <ol className="list-decimal pl-5 mb-2 ml-2 space-y-1" {...props} />,
-                                                    li: ({ node, ...props }) => <li className="" {...props} />,
-                                                    strong: ({ node, ...props }) => <strong className={`font-semibold ${msg.role === 'user' ? 'text-white' : 'text-indigo-200'}`} {...props} />,
-                                                }}
-                                            >
-                                                {msg.content}
-                                            </ReactMarkdown>
-                                        </div>
-                                    </div>
-                                </div>
-                            </motion.div>
-                        ))}
-                    </AnimatePresence>
-
-
-                    {isTyping && (
+                    {isGeneratingRoadmap ? (
                         <motion.div
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="flex justify-start w-full"
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            className="flex flex-col items-center justify-center py-20 min-h-[50vh]"
                         >
-                            <div className="flex gap-3 max-w-[85%]">
-                                <div className="shrink-0 w-8 h-8 rounded-full bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 flex items-center justify-center shadow-sm">
-                                    <Bot className="w-4 h-4" />
-                                </div>
-                                <div className="px-5 py-4 rounded-2xl rounded-tl-sm bg-indigo-900/30 border border-indigo-500/20 backdrop-blur-md shadow-lg flex items-center gap-1.5">
-                                    <motion.div className="w-1.5 h-1.5 bg-indigo-400 rounded-full" animate={{ y: [0, -5, 0] }} transition={{ duration: 0.6, repeat: Infinity, delay: 0 }} />
-                                    <motion.div className="w-1.5 h-1.5 bg-indigo-400 rounded-full" animate={{ y: [0, -5, 0] }} transition={{ duration: 0.6, repeat: Infinity, delay: 0.2 }} />
-                                    <motion.div className="w-1.5 h-1.5 bg-indigo-400 rounded-full" animate={{ y: [0, -5, 0] }} transition={{ duration: 0.6, repeat: Infinity, delay: 0.4 }} />
+                            <div className="relative w-32 h-32 mb-8 flex items-center justify-center">
+                                {/* Glowing animated orb rings */}
+                                <motion.div
+                                    animate={{
+                                        scale: [1, 1.5, 1],
+                                        opacity: [0.3, 0.7, 0.3],
+                                    }}
+                                    transition={{
+                                        duration: 3,
+                                        repeat: Infinity,
+                                        ease: "easeInOut"
+                                    }}
+                                    className="absolute inset-0 rounded-full bg-indigo-500/30 blur-xl"
+                                />
+                                <motion.div
+                                    animate={{
+                                        scale: [1, 1.2, 1],
+                                        opacity: [0.5, 0.8, 0.5],
+                                    }}
+                                    transition={{
+                                        duration: 2,
+                                        repeat: Infinity,
+                                        ease: "easeInOut"
+                                    }}
+                                    className="absolute inset-4 rounded-full bg-purple-500/40 blur-md"
+                                />
+                                <div className="absolute inset-8 rounded-full bg-white/10 border border-white/30 backdrop-blur-md flex items-center justify-center shadow-inner z-10">
+                                    <Bot className="w-8 h-8 text-indigo-200 animate-pulse" />
                                 </div>
                             </div>
+
+                            <AnimatePresence mode="wait">
+                                <motion.h3
+                                    key={loadingMessageIndex}
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: -10 }}
+                                    transition={{ duration: 0.5 }}
+                                    className="text-xl md:text-2xl font-bold text-center text-transparent bg-clip-text bg-gradient-to-r from-indigo-200 to-white"
+                                >
+                                    {LOADING_MESSAGES[loadingMessageIndex]}
+                                </motion.h3>
+                            </AnimatePresence>
+
+                            <p className="mt-4 text-white/50 text-sm text-center max-w-sm">
+                                Quá trình này có thể mất từ 1 - 3 phút vì AI đang tạo danh sách lộ trình rất chi tiết cho từng ngày. Tốc độ hơi rùa tí nhưng mà chắc chắn nó chất đó Sếp ạ!
+                            </p>
                         </motion.div>
-                    )}
+                    ) : (
+                        <>
+                            <AnimatePresence initial={false}>
+                                {messages.map((msg) => (
+                                    <motion.div
+                                        key={msg.id}
+                                        initial={{ opacity: 0, y: 15, scale: 0.95 }}
+                                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                                        transition={{ duration: 0.4, type: 'spring', bounce: 0.3 }}
+                                        className={`flex w-full ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                                    >
+                                        <div className={`flex gap-3 max-w-[85%] ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
+
+                                            <div className={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center border shadow-sm ${msg.role === 'assistant'
+                                                ? 'bg-indigo-500/20 border-indigo-500/30 text-indigo-300'
+                                                : 'bg-white/10 border-white/20 text-white/70'
+                                                }`}>
+                                                {msg.role === 'assistant' ? <Bot className="w-4 h-4" /> : <User className="w-4 h-4" />}
+                                            </div>
 
 
-                    {step >= 5 && !isTyping && (
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.95, y: 10 }}
-                            animate={{ opacity: 1, scale: 1, y: 0 }}
-                            className="pt-6 pb-2 flex justify-center w-full"
-                        >
-                            <button
-                                onClick={handleGenerateRoadmap}
-                                disabled={isGeneratingRoadmap}
-                                className="w-full max-w-sm py-4 rounded-2xl bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-400 hover:to-purple-500 font-bold text-white shadow-xl transition-all flex items-center justify-center gap-2 hover:shadow-indigo-500/25 active:scale-95 disabled:opacity-70 disabled:active:scale-100"
-                            >
-                                {isGeneratingRoadmap ? (
-                                    <>
-                                        <Loader2 className="w-5 h-5 animate-spin" />
-                                        Đang tổng hợp thông tin...
-                                    </>
-                                ) : (
-                                    <>
+                                            <div className={`px-5 py-3.5 rounded-2xl shadow-lg border backdrop-blur-md ${msg.role === 'user'
+                                                ? 'bg-white/10 border-white/15 text-white rounded-tr-sm'
+                                                : 'bg-indigo-900/30 border-indigo-500/20 text-indigo-50 rounded-tl-sm'
+                                                }`}>
+                                                <div className="text-sm md:text-base leading-relaxed whitespace-pre-wrap">
+                                                    <ReactMarkdown
+                                                        components={{
+                                                            p: ({ node, ...props }) => <p className="mb-2 last:mb-0" {...props} />,
+                                                            ul: ({ node, ...props }) => <ul className="list-disc pl-5 mb-2 ml-2 space-y-1" {...props} />,
+                                                            ol: ({ node, ...props }) => <ol className="list-decimal pl-5 mb-2 ml-2 space-y-1" {...props} />,
+                                                            li: ({ node, ...props }) => <li className="" {...props} />,
+                                                            strong: ({ node, ...props }) => <strong className={`font-semibold ${msg.role === 'user' ? 'text-white' : 'text-indigo-200'}`} {...props} />,
+                                                        }}
+                                                    >
+                                                        {msg.content}
+                                                    </ReactMarkdown>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </motion.div>
+                                ))}
+                            </AnimatePresence>
+
+                            {isTyping && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="flex justify-start w-full"
+                                >
+                                    <div className="flex gap-3 max-w-[85%]">
+                                        <div className="shrink-0 w-8 h-8 rounded-full bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 flex items-center justify-center shadow-sm">
+                                            <Bot className="w-4 h-4" />
+                                        </div>
+                                        <div className="px-5 py-4 rounded-2xl rounded-tl-sm bg-indigo-900/30 border border-indigo-500/20 backdrop-blur-md shadow-lg flex items-center gap-1.5">
+                                            <motion.div className="w-1.5 h-1.5 bg-indigo-400 rounded-full" animate={{ y: [0, -5, 0] }} transition={{ duration: 0.6, repeat: Infinity, delay: 0 }} />
+                                            <motion.div className="w-1.5 h-1.5 bg-indigo-400 rounded-full" animate={{ y: [0, -5, 0] }} transition={{ duration: 0.6, repeat: Infinity, delay: 0.2 }} />
+                                            <motion.div className="w-1.5 h-1.5 bg-indigo-400 rounded-full" animate={{ y: [0, -5, 0] }} transition={{ duration: 0.6, repeat: Infinity, delay: 0.4 }} />
+                                        </div>
+                                    </div>
+                                </motion.div>
+                            )}
+
+                            {step >= 5 && !isTyping && (
+                                <motion.div
+                                    initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                                    className="pt-6 pb-2 flex justify-center w-full"
+                                >
+                                    <button
+                                        onClick={handleGenerateRoadmap}
+                                        disabled={isGeneratingRoadmap}
+                                        className="w-full max-w-sm py-4 rounded-2xl bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-400 hover:to-purple-500 font-bold text-white shadow-xl transition-all flex items-center justify-center gap-2 hover:shadow-indigo-500/25 active:scale-95 disabled:opacity-70 disabled:active:scale-100"
+                                    >
                                         <Sparkles className="w-5 h-5" />
                                         Chốt Lộ Trình Ngay!
-                                    </>
-                                )}
-                            </button>
-                        </motion.div>
+                                    </button>
+                                </motion.div>
+                            )}
+                        </>
                     )}
+
                     <div ref={messagesEndRef} />
                 </div>
             </main>
 
 
-            {step < 5 && (
+            {!isGeneratingRoadmap && step < 5 && (
                 <footer className="relative z-20 border-t border-white/10 bg-[#1e1e24]/70 backdrop-blur-2xl p-4 shrink-0">
                     <div className="max-w-2xl mx-auto relative">
                         <input
@@ -334,8 +422,8 @@ export default function OnboardingPage() {
                             onKeyDown={(e) => e.key === 'Enter' && handleSend()}
                             placeholder={
                                 step === 0 ? "Tôi muốn..." :
-                                    step === 1 ? "Khoảng thời gian là..." :
-                                        step === 2 ? "Ngày hoàn thành là..." :
+                                    step === 1 ? "Ngày hoàn thành là..." :
+                                        step === 2 ? "Thời gian mỗi ngày..." :
                                             step === 3 ? "Trình độ của tôi là..." :
                                                 "Ghi chú thêm..."
                             }
