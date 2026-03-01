@@ -8,6 +8,7 @@ import ClientTaskList from './ClientTaskList';
 import DeleteGoalButton from './DeleteGoalButton';
 import CountdownWidget from './CountdownWidget';
 import DashboardControls from './DashboardControls';
+import NightReflection from './NightReflection';
 import LoadDemoButton from './LoadDemoButton';
 import GuidedTour from './GuidedTour';
 import { getEvents } from './calendarActions';
@@ -76,7 +77,7 @@ export default async function DashboardPage() {
 
     return (
         <div className="min-h-screen bg-neutral-900 text-white font-sans overflow-y-auto overflow-x-hidden relative selection:bg-indigo-500/30 selection:text-indigo-200">
-            <GuidedTour />
+            <GuidedTour hasGoals={!!(goals && goals.length > 0)} />
 
 
             <div className="fixed top-[-10%] left-[-10%] w-[600px] h-[600px] bg-indigo-600/20 rounded-full mix-blend-screen filter blur-[120px] pointer-events-none"></div>
@@ -91,7 +92,10 @@ export default async function DashboardPage() {
                     <Link
                         href="/onboarding"
                         data-tour="add-goal"
-                        className="px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-semibold rounded-full shadow-lg transition-colors flex items-center justify-center gap-2 max-w-fit"
+                        className={`px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-semibold rounded-full shadow-lg transition-all flex items-center justify-center gap-2 max-w-fit ${!goals || goals.length === 0
+                            ? 'animate-wave'
+                            : ''
+                            }`}
                     >
                         + Thêm Mục Tiêu Mới
                     </Link>
@@ -136,7 +140,7 @@ export default async function DashboardPage() {
 
 
                 <div data-tour="ai-controls">
-                    <DashboardControls />
+                    <DashboardControls hasTasks={!!(tasks && tasks.length > 0)} />
                 </div>
 
 
@@ -155,23 +159,7 @@ export default async function DashboardPage() {
                 </div>
 
 
-                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 w-full max-w-2xl px-4 sm:px-0 pointer-events-none" data-tour="night-reflection">
-                    <div className="liquid-glass-heavy p-2 sm:p-2.5 rounded-[32px] flex items-center gap-3 w-full pointer-events-auto">
-                        <div className="shrink-0 w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg border border-white/10">
-                            <Moon className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-                        </div>
-                        <div className="flex-1">
-                            <input
-                                type="text"
-                                placeholder="Ngày hôm nay của bạn thế nào? (Kể cho AI nghe...)"
-                                className="w-full bg-transparent border-none px-2 py-2 text-sm md:text-base text-white focus:outline-none focus:ring-0 placeholder:text-white/40 font-medium tracking-wide"
-                            />
-                        </div>
-                        <button className="shrink-0 bg-white hover:bg-white/90 text-indigo-900 font-bold px-5 py-2 sm:px-6 sm:py-2.5 rounded-full transition-transform active:scale-95 shadow-md text-sm sm:text-base">
-                            Gửi
-                        </button>
-                    </div>
-                </div>
+                <NightReflection hasTasks={!!(tasks && tasks.length > 0)} />
             </main>
         </div>
     );

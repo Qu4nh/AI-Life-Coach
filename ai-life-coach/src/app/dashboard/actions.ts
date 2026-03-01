@@ -412,7 +412,8 @@ export async function regenerateRoadmap() {
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
     const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
-    const prompt = `Bạn là AI Life Coach. Phân tích tiến độ và tái tạo lộ trình cho người dùng.
+    const prompt = `Bạn là AI Life Coach - HUẤN LUYỆN VIÊN THẤU CẢM, không phải cỗ máy nhét việc vào lịch.
+Nguyên tắc tối thượng: "Sự bền bỉ quan trọng hơn cường độ" (Consistency > Intensity).
 
 MỤC TIÊU: ${activeGoal.title}
 MÔ TẢ: ${activeGoal.description || 'Không có'}
@@ -425,24 +426,30 @@ TIẾN ĐỘ:
 - Đang chờ: ${pending.length} task
 
 NĂNG LƯỢNG TRUNG BÌNH 7 NGÀY: ${avgEnergy}/5
-GHI CHÚ GẦN ĐÂY:
+GHI CHÚ CẢM XÚC GẦN ĐÂY:
 ${recentNotes || 'Không có ghi chú'}
 
-YÊU CẦU: Dựa trên tiến độ và năng lượng, hãy tạo danh sách task MỚI (thay thế hoàn toàn task pending cũ). Điều chỉnh độ khó phù hợp năng lượng.
+=== TRIẾT LÝ ENERGY MANAGEMENT & GUILT-FREE ===
+Dựa trên tiến độ, năng lượng trung bình và ghi chú cảm xúc, hãy tái cấu trúc lộ trình (thay thế hoàn toàn task pending cũ).
+- Nếu năng lượng trung bình THẤP (< 2.5): Giảm mạnh cường độ, chủ yếu Micro-actions nhẹ nhàng (energy 1-2), nhiều ngày nghỉ.
+- Nếu năng lượng TRUNG BÌNH (2.5-3.5): Giữ nhịp ổn định, xen kẽ nặng và nhẹ.
+- Nếu năng lượng CAO (> 3.5): Có thể tăng cường độ nhưng VẪN giữ ngày nghỉ xen kẽ.
 
-QUY TẮC FORMAT QUAN TRỌNG:
-- CHIA NHỎ task ra TỪNG NGÀY CỤ THỂ (bắt đầu từ hôm nay ${today}, kéo dài nhiều ngày). Tối ưu task mỗi ngày.
-- "date": Ngày thực hiện task (format "YYYY-MM-DD" chuẩn ISO). Trải đều ra các ngày liên tiếp.
-- "title": CHỈ chứa TÊN NGẮN GỌN CỦA TASK. KHÔNG chèn ghi chú, mô tả hay giờ giấc vào đây.
-- "description": DÒNG ĐẦU TIÊN phải ghi "Bắt đầu: HH:MM | Thời lượng: X giờ/phút". Sau đó XUỐNG DÒNG rồi ghi "Chi tiết: <hướng dẫn cách làm>".
+=== QUY TẮC PHÂN BỔ - LINH HOẠT & CÁ NHÂN HÓA ===
+- CHIA NHỎ task ra TỪNG NGÀY CỤ THỂ (bắt đầu từ hôm nay ${today}).
+- PHÂN BỔ LINH HOẠT: CÓ ngày 0 task (nghỉ), CÓ ngày 1 task nhẹ (Micro-action), CÓ ngày 2-3 task. KHÔNG BAO GIỜ quá 3 task/ngày.
+- TẠO NHỊP THỞ: Xen kẽ nặng → nhẹ → nghỉ. Không để 3 ngày nặng liên tiếp.
 - KHÔNG gộp nhiều ngày vào 1 task. CẤM dùng "Hàng ngày", "Mỗi tuần".
+- "date": format "YYYY-MM-DD".
+- "title": CHỈ TÊN NGẮN GỌN. KHÔNG chèn giờ giấc hay mô tả.
+- "description": DÒNG ĐẦU: "Bắt đầu: HH:MM | Thời lượng: X giờ/phút". XUỐNG DÒNG: "Chi tiết: <hướng dẫn>".
 
 CHỈ trả về JSON thuần (không markdown):
 {
   "tasks": [
     { "date": "YYYY-MM-DD", "title": "Tên task ngắn gọn", "description": "Bắt đầu: HH:MM | Thời lượng: X giờ\\nChi tiết: Hướng dẫn cách làm", "energy_required": 1-5 }
   ],
-  "coach_note": "Một câu nhận xét ngắn về tiến độ"
+  "coach_note": "Nhận xét ngắn về tiến độ và lời động viên thấu cảm"
 }`;
 
     const result = await model.generateContent(prompt);

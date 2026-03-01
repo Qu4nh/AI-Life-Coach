@@ -56,6 +56,19 @@ body {
   animation-delay: 4s;
 }
 
+@keyframes wave-ring {
+  0% {
+    box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.8);
+  }
+  100% {
+    box-shadow: 0 0 0 20px rgba(99, 102, 241, 0);
+  }
+}
+
+.animate-wave {
+  animation: wave-ring 1.5s infinite linear;
+}
+
 .custom-scrollbar::-webkit-scrollbar {
   width: 6px;
   height: 6px;

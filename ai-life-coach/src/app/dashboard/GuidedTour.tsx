@@ -5,6 +5,8 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
 import confetti from 'canvas-confetti';
 import { X, ChevronRight, ChevronLeft, Sparkles, Hand, CalendarDays, Target, BrainCircuit, Moon, BatteryCharging, RotateCcw, Plus, HelpCircle } from 'lucide-react';
+import Link from 'next/link';
+import LoadDemoButton from './LoadDemoButton';
 
 interface TourStep {
     target: string;
@@ -110,6 +112,7 @@ const TOUR_STEPS: TourStep[] = [
 ];
 
 const STORAGE_KEY = 'ai-coach-tour-seen';
+const WELCOME_KEY = 'ai-coach-welcome-seen';
 const PADDING = 12;
 const BORDER_RADIUS = 20;
 
@@ -179,20 +182,26 @@ function DemoSwipeCard({ onSwiped }: { onSwiped: () => void }) {
     );
 }
 
-export default function GuidedTour() {
+export default function GuidedTour({ hasGoals }: { hasGoals?: boolean }) {
     const [isOpen, setIsOpen] = useState(false);
+    const [showWelcome, setShowWelcome] = useState(false);
     const [step, setStep] = useState(0);
     const [spotlightRect, setSpotlightRect] = useState<DOMRect | null>(null);
     const [tooltipStyle, setTooltipStyle] = useState<React.CSSProperties>({});
     const resizeObserver = useRef<ResizeObserver | null>(null);
 
     useEffect(() => {
-        const seen = localStorage.getItem(STORAGE_KEY);
-        if (!seen) {
+        const tourSeen = localStorage.getItem(STORAGE_KEY);
+        const welcomeSeen = localStorage.getItem(WELCOME_KEY);
+
+        if (hasGoals === false && !welcomeSeen) {
+            const timer = setTimeout(() => setShowWelcome(true), 500);
+            return () => clearTimeout(timer);
+        } else if (!tourSeen) {
             const timer = setTimeout(() => setIsOpen(true), 1500);
             return () => clearTimeout(timer);
         }
-    }, []);
+    }, [hasGoals]);
 
     useEffect(() => {
         const handleRestartEvent = () => {
@@ -405,6 +414,61 @@ export default function GuidedTour() {
         setStep(0);
         setIsOpen(true);
     };
+
+    if (showWelcome) {
+        return (
+            <AnimatePresence>
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+                >
+                    <motion.div
+                        initial={{ scale: 0.9, y: 20 }}
+                        animate={{ scale: 1, y: 0 }}
+                        className="bg-[#1e1e24] border border-white/10 p-8 rounded-3xl max-w-md w-full text-center shadow-2xl relative"
+                    >
+                        <div className="w-16 h-16 bg-gradient-to-tr from-indigo-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg shadow-indigo-500/20">
+                            <Sparkles className="w-8 h-8 text-white" />
+                        </div>
+                        <h2 className="text-2xl font-bold mb-3 text-white">Chào mừng giám khảo! 🧑‍🏫</h2>
+                        <p className="text-white/60 mb-8 leading-relaxed">
+                            Hiện tại chưa có mục tiêu nào. Thầy/Cô có thể tạo mục tiêu mới hoặc nạp dữ liệu demo có sẵn để trải nghiệm AI Life Coach nhanh nhất.
+                        </p>
+
+                        <div className="flex flex-row gap-3 mb-6 w-full">
+                            <div className="flex-1 min-w-0 [&>button]:w-full [&>button]:h-full [&>button]:px-2">
+                                <LoadDemoButton />
+                            </div>
+                            <Link
+                                href="/onboarding"
+                                className="flex-1 min-w-0 px-2 py-3 bg-white/10 hover:bg-white/15 text-white text-sm font-semibold rounded-2xl transition-all flex items-center justify-center gap-2"
+                            >
+                                <Target className="w-4 h-4 text-indigo-400 shrink-0" />
+                                <span className="truncate">Tạo Mục Tiêu</span>
+                            </Link>
+                        </div>
+
+                        <button
+                            onClick={() => {
+                                localStorage.setItem(WELCOME_KEY, 'true');
+                                setShowWelcome(false);
+
+                                const tourSeen = localStorage.getItem(STORAGE_KEY);
+                                if (!tourSeen) {
+                                    setIsOpen(true);
+                                }
+                            }}
+                            className="text-white/40 hover:text-white/70 text-sm font-medium transition-colors"
+                        >
+                            Bỏ qua
+                        </button>
+                    </motion.div>
+                </motion.div>
+            </AnimatePresence>
+        );
+    }
 
     const current = TOUR_STEPS[step];
     const isLast = step === TOUR_STEPS.length - 1;

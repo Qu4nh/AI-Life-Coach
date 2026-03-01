@@ -110,5 +110,5 @@ export async function loginAsGuest() {
         await supabase.from('daily_logs').delete().eq('user_id', data.user.id);
     }
 
-    return redirect('/onboarding')
+    return redirect('/dashboard')
 }
