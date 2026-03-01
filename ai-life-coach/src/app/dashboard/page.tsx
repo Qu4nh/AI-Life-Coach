@@ -12,6 +12,7 @@ import NightReflection from './NightReflection';
 import LoadDemoButton from './LoadDemoButton';
 import GuidedTour from './GuidedTour';
 import LogoutButton from './LogoutButton';
+import DashboardStats from './DashboardStats';
 import { getEvents } from './calendarActions';
 import { hasCheckedInToday } from './actions';
 import { Hourglass, Moon } from 'lucide-react';
@@ -185,6 +186,9 @@ export default async function DashboardPage() {
                     </div>
                 )}
 
+                {goals && goals.length > 0 && goals.some(g => g.title.includes("Chinh phục IELTS") || g.title.includes("Giảm 3kg mỡ")) && (
+                    <DashboardStats />
+                )}
 
                 <div data-tour="ai-controls">
                     <DashboardControls hasTasks={!!(tasks && tasks.length > 0)} />
