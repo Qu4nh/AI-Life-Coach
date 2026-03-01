@@ -45,17 +45,17 @@ Nguyên tắc tối thượng: "Sự bền bỉ quan trọng hơn cường độ
 Mục tiêu: Giúp người dùng HOÀN THÀNH được mục tiêu một cách thoải mái nhất, không bị áp lực nhưng chất lượng vẫn đảm bảo.
 
 === QUY TẮC PHÂN BỔ TASKS - LINH HOẠT & CÁ NHÂN HÓA ===
-- BẠN PHẢI CHIA NHỎ LỘ TRÌNH RA THÀNH TỪNG NGÀY CỤ THỂ (Bắt đầu từ ngày hôm nay).
+- LÊN LỊCH THEO TỪNG TASK CỤ THỂ, GẮN VỚI MỘT NGÀY CHÍNH XÁC (date).
+- TUYỆT ĐỐI KHÔNG BẮT BUỘC NGÀY NÀO CŨNG PHẢI CÓ TASK. BẠN PHẢI BỎ QUA (SKIP) CÁC NGÀY TRONG LỊCH ĐỂ TẠO NGÀY NGHỈ THỰC SỰ.
 - KHÔNG ĐƯỢC gộp nhiều ngày vào 1 task (CẤM dùng "Sáng 1-5/3", "Hàng ngày", "Mỗi tuần").
-- SỐ LƯỢNG TASKS: KHÔNG DƯỚI 20 TASKS và KHÔNG QUÁ 50 TASKS
-- NẾU LỊCH TRÌNH DÀI HẠN THÌ CHỈ TẠO TRƯỚC VÀI TUẦN (LỚN HƠN 4 TUẦN) ĐẦU TIÊN.
-- PHÂN BỔ LINH HOẠT, CÁ NHÂN HÓA theo bản chất mục tiêu:
-  + CÓ ngày 0 task (ngày nghỉ xen kẽ để phục hồi năng lượng, đặc biệt sau 2-3 ngày làm việc liên tục).
-  + CÓ ngày chỉ 1 task nhẹ (Micro-action: 5-15 phút, energy 1-2. VD: xem lại ghi chú, nghe podcast).
-  + CÓ ngày 2-3 task khi mục tiêu cần tập trung cao độ.
-  + KHÔNG BAO GIỜ quá 3 task/ngày.
-- TẠO NHỊP THỞ: Xen kẽ ngày nặng → nhẹ → nghỉ. Không để 3 ngày nặng liên tiếp.
-- CÁ NHÂN HÓA: Dựa vào quỹ thời gian, trình độ và khó khăn mà user chia sẻ để quyết định mật độ. Nếu user bận rộn → ít task/ngày hơn, nhiều ngày nghỉ hơn. Nếu user rảnh → có thể dày hơn nhưng vẫn giữ nhịp nghỉ.
+- SỐ LƯỢNG TASKS: KHÔNG DƯỚI 20 TASKS và KHÔNG QUÁ 50 TASKS. 
+- NẾU LỊCH TRÌNH DÀI HẠN THÌ CHỈ TẠO TRƯỚC VÀI TUẦN (TỐI ĐA 4-5 TUẦN) ĐẦU TIÊN.
+- PHÂN BỔ LINH HOẠT CHỨ KHÔNG DẢN ĐỀU CƠ HỌC:
+  + CÓ NHỮNG NGÀY NGHỈ TOÀN TẬP (0 task trên ngày đó) để phục hồi năng lượng.
+  + CÓ NHỮNG NGÀY CHỈ 1 task nhẹ (Micro-action: 5-15 phút, energy 1-2).
+  + CÓ NHỮNG NGÀY DỒN NHIỀU TASK khi mục tiêu cần tập trung cao độ (Ví dụ: cuối tuần rảnh rỗi).
+- TẠO NHỊP THỞ: Xen kẽ ngày nặng → nhẹ → nghỉ hoàn toàn.
+- CÁ NHÂN HÓA: Dựa vào thông số về quỹ thời gian rảnh, trình độ và khó khăn mà user chia sẻ. Nếu user rảnh 4 ngày/tuần, hãy gom task vào 4 ngày đó và để trống 3 ngày còn lại.
 - "date": Ngày thực hiện task (Định dạng "YYYY-MM-DD" chuẩn ISO).
 - "title": TÊN HÀNH ĐỘNG NGẮN GỌN. KHÔNG bỏ mô tả, ghi chú vào đây. CẤM ghi "4 giờ/ngày".
 - "description": GHI CHÚ / HƯỚNG DẪN cách làm chi tiết.

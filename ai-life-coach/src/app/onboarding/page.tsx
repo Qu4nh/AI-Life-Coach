@@ -39,12 +39,12 @@ export default function OnboardingPage() {
         "Đang rà soát năng lượng và lịch trình cá nhân...",
         "Tính toán số lượng task phù hợp để không bị mệt...",
         "Đang phân bổ nhịp nghỉ ngơi xen kẽ hợp lý...",
+        "Đang cook cho bạn một lộ trình xịn xò...",
         "Tìm giải pháp cho những khó khăn tiềm ẩn...",
         "Gần xong rồi, lộ trình dài hạn đang thành hình...",
         "Xin chờ một chút, đang tinh chỉnh bước cuối...",
         "Nà Ná Na Na ....",
-        "Đừng lo, task mới sẽ được thêm khi tổng kết tuần",
-        "Đang cook cho bạn một lộ trình xịn xò..."
+        "Đừng lo, task mới sẽ được thêm khi tổng kết tuần"
     ];
 
     useEffect(() => {

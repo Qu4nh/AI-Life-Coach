@@ -11,6 +11,7 @@ import DashboardControls from './DashboardControls';
 import NightReflection from './NightReflection';
 import LoadDemoButton from './LoadDemoButton';
 import GuidedTour from './GuidedTour';
+import LogoutButton from './LogoutButton';
 import { getEvents } from './calendarActions';
 import { hasCheckedInToday } from './actions';
 import { Hourglass, Moon } from 'lucide-react';
@@ -19,6 +20,49 @@ export const dynamic = 'force-dynamic';
 
 function getVietnamToday(): string {
     return new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Ho_Chi_Minh' });
+}
+
+function getGreeting(): string {
+    const vnTime = new Date().toLocaleString('en-US', { timeZone: 'Asia/Ho_Chi_Minh' });
+    const hour = new Date(vnTime).getHours();
+
+    let messages: string[] = [];
+
+    if (hour >= 5 && hour < 11) {
+        messages = [
+            "Sáng tinh sương, nạp năng lượng và bắt đầu một ngày bùng nổ nào! 🌅",
+            "Tranh thủ buổi sáng khi não bộ còn minh mẫn để làm việc khó nhất nhé sếp! 💪",
+            "Một ly cafe, một tinh thần thép. Khởi đầu ngày mới thật trọn vẹn nha! ☕",
+            "Góc nhìn mới, cơ hội mới. Sẵn sàng phá vỡ giới hạn hôm nay chưa? 🚀"
+        ];
+    } else if (hour >= 11 && hour < 14) {
+        messages = [
+            "Giờ nghỉ trưa rồi. Nhớ ăn uống đầy đủ và thư giãn chút nhé sếp! ☀️",
+            "Làm việc hăng say nhưng đừng quên nạp lại năng lượng nhé. Nửa chặn đường rồi! 🥗",
+            "Chợp mắt 15-20 phút sẽ giúp buổi chiều làm việc mượt mà hơn đấy. 😴"
+        ];
+    } else if (hour >= 14 && hour < 18) {
+        messages = [
+            "Chiều rồi, cố lên một chút nữa thôi. Sự kiên trì của bạn sẽ được đền đáp! ☕",
+            "Đừng để buổi chiều làm bạn chùng bước. Hãy giữ vững sự tập trung nhé! 🔥",
+            "Mệt mỏi một chút cũng không sao, quan trọng là bạn vẫn đang tiến lên! 🏃‍♂️",
+            "Đứng dậy vươn vai uống một ngụm nước đi sếp ơi, sắp qua phiên làm việc rồi! 💧"
+        ];
+    } else if (hour >= 18 && hour < 22) {
+        messages = [
+            "Một ngày vất vả rồi. Hãy tự thưởng cho bản thân một buổi tối thật chill nhé 🌙",
+            "Hoàn thành nốt công việc nhé, sau đó là lúc dành thời gian cho bản thân và thư giãn. 🛋️",
+            "Phản tư lại những gì đã làm được hôm nay, bạn sẽ thấy mình đã trưởng thành hơn đó! 📖"
+        ];
+    } else {
+        messages = [
+            "Đêm đã về. Hãy nhắm mắt lại, nghỉ ngơi sâu để ngày mai tiếp tục cuộc hành trình 🦉",
+            "Ngủ ngon nhé. Sạc đầy pin để ngày mai lại cháy hết mình! 🔋",
+            "Đừng thức quá khuya, một giấc ngủ đủ sẽ là bước đệm tốt nhất cho chiến thắng ngày mai. 🛌"
+        ];
+    }
+
+    return messages[Math.floor(Math.random() * messages.length)];
 }
 
 export default async function DashboardPage() {
@@ -86,8 +130,11 @@ export default async function DashboardPage() {
             <main className="w-full max-w-[1600px] mx-auto px-4 py-8 sm:px-6 lg:px-8 lg:py-12 space-y-8 z-10 relative">
                 <header className="mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
-                        <h1 className="text-3xl font-bold tracking-tight">Trang Chủ 🔥</h1>
-                        <p className="text-white/60 mt-1">Chào ngày mới! Cùng bắt đầu phá vỡ rào cản nhé.</p>
+                        <div className="flex items-center gap-4">
+                            <h1 className="text-3xl font-bold tracking-tight">Trang Chủ 🔥</h1>
+                            <LogoutButton />
+                        </div>
+                        <p className="text-white/60 mt-1">{getGreeting()}</p>
                     </div>
                     <Link
                         href="/onboarding"

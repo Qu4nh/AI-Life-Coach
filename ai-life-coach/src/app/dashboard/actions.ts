@@ -3,6 +3,7 @@
 
 import { createClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { redirect } from 'next/navigation'
 
 function getVietnamToday(): string {
     return new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Ho_Chi_Minh' });
@@ -435,11 +436,15 @@ Dựa trên tiến độ, năng lượng trung bình và ghi chú cảm xúc, h�
 - Nếu năng lượng TRUNG BÌNH (2.5-3.5): Giữ nhịp ổn định, xen kẽ nặng và nhẹ.
 - Nếu năng lượng CAO (> 3.5): Có thể tăng cường độ nhưng VẪN giữ ngày nghỉ xen kẽ.
 
-=== QUY TẮC PHÂN BỔ - LINH HOẠT & CÁ NHÂN HÓA ===
-- CHIA NHỎ task ra TỪNG NGÀY CỤ THỂ (bắt đầu từ hôm nay ${today}).
-- PHÂN BỔ LINH HOẠT: CÓ ngày 0 task (nghỉ), CÓ ngày 1 task nhẹ (Micro-action), CÓ ngày 2-3 task. KHÔNG BAO GIỜ quá 3 task/ngày.
-- TẠO NHỊP THỞ: Xen kẽ nặng → nhẹ → nghỉ. Không để 3 ngày nặng liên tiếp.
-- KHÔNG gộp nhiều ngày vào 1 task. CẤM dùng "Hàng ngày", "Mỗi tuần".
+=== QUY TẮC PHÂN BỔ TASKS - LINH HOẠT & CÁ NHÂN HÓA ===
+- LÊN LỊCH THEO TỪNG TASK CỤ THỂ, GẮN VỚI MỘT NGÀY CHÍNH XÁC (date) bắt đầu từ hôm nay ${today}.
+- TUYỆT ĐỐI KHÔNG BẮT BUỘC NGÀY NÀO CŨNG PHẢI CÓ TASK. BẠN PHẢI BỎ QUA (SKIP) CÁC NGÀY TRONG LỊCH ĐỂ TẠO NGÀY NGHỈ THỰC SỰ.
+- KHÔNG ĐƯỢC gộp nhiều ngày vào 1 task (CẤM dùng "Hàng ngày", "Mỗi tuần").
+- PHÂN BỔ LINH HOẠT CHỨ KHÔNG DẢN ĐỀU CƠ HỌC:
+  + CÓ NHỮNG NGÀY NGHỈ TOÀN TẬP (0 task trên ngày đó) để phục hồi năng lượng.
+  + CÓ NHỮNG NGÀY CHỈ 1 task nhẹ (Micro-action: 5-15 phút, energy 1-2).
+  + CÓ NHỮNG NGÀY DỒN NHIỀU TASK khi mục tiêu cần tập trung cao độ (Ví dụ: cuối tuần rảnh rỗi).
+- TẠO NHỊP THỞ: Xen kẽ ngày nặng → nhẹ → nghỉ hoàn toàn.
 - "date": format "YYYY-MM-DD".
 - "title": CHỈ TÊN NGẮN GỌN. KHÔNG chèn giờ giấc hay mô tả.
 - "description": DÒNG ĐẦU: "Bắt đầu: HH:MM | Thời lượng: X giờ/phút". XUỐNG DÒNG: "Chi tiết: <hướng dẫn>".
@@ -491,5 +496,11 @@ CHỈ trả về JSON thuần (không markdown):
     revalidatePath('/dashboard');
 
     return { success: true, coachNote: data.coach_note || '', taskCount: newTasks.length };
+}
+
+export async function logout() {
+    const supabase = await createClient();
+    await supabase.auth.signOut();
+    redirect('/login');
 }
 

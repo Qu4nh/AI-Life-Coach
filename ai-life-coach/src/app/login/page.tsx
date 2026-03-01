@@ -14,6 +14,7 @@ export default function LoginPage({
     const params = use(searchParams);
     const [isLoginMode, setIsLoginMode] = useState(true);
     const [isGuestLoading, setIsGuestLoading] = useState(false);
+    const [isSubmitLoading, setIsSubmitLoading] = useState(false);
 
     return (
         <div className="relative min-h-screen flex items-center justify-center overflow-hidden bg-neutral-900">
@@ -66,7 +67,7 @@ export default function LoginPage({
                 </div>
 
 
-                <form className="space-y-4 mb-6">
+                <form action={isLoginMode ? login : signup} onSubmit={() => setIsSubmitLoading(true)} className="space-y-4 mb-6">
                     <div className="space-y-3 flex flex-col">
                         <div className="relative">
                             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -77,7 +78,8 @@ export default function LoginPage({
                                 name="email"
                                 placeholder="Email của bạn"
                                 required
-                                className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-11 pr-4 text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 shadow-inner transition-all hover:bg-white/10 outline-none"
+                                disabled={isSubmitLoading}
+                                className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-11 pr-4 text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 shadow-inner transition-all hover:bg-white/10 outline-none disabled:opacity-50"
                             />
                         </div>
 
@@ -90,7 +92,8 @@ export default function LoginPage({
                                 name="password"
                                 placeholder="Mật khẩu"
                                 required
-                                className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-11 pr-4 text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 shadow-inner transition-all hover:bg-white/10 outline-none"
+                                disabled={isSubmitLoading}
+                                className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-11 pr-4 text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 shadow-inner transition-all hover:bg-white/10 outline-none disabled:opacity-50"
                             />
                         </div>
                     </div>
@@ -98,19 +101,27 @@ export default function LoginPage({
                     <div className="pt-2">
                         {isLoginMode ? (
                             <button
-                                formAction={login}
                                 type="submit"
-                                className="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-medium py-3 px-4 rounded-xl border border-white/20 transition-all duration-300 ease-in-out active:scale-95 shadow-md flex justify-center items-center gap-2"
+                                disabled={isSubmitLoading}
+                                className="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-medium py-3 px-4 rounded-xl border border-white/20 transition-all duration-300 ease-in-out active:scale-95 shadow-md flex justify-center items-center gap-2 disabled:opacity-70 disabled:active:scale-100"
                             >
-                                Vào ngay <ArrowRight className="w-4 h-4" />
+                                {isSubmitLoading ? (
+                                    <div className="w-5 h-5 rounded-full border-2 border-white border-t-transparent animate-spin" />
+                                ) : (
+                                    <>Vào ngay <ArrowRight className="w-4 h-4" /></>
+                                )}
                             </button>
                         ) : (
                             <button
-                                formAction={signup}
                                 type="submit"
-                                className="w-full bg-white/20 hover:bg-white/30 text-white font-medium py-3 px-4 rounded-xl border border-white/20 transition-all duration-300 ease-in-out active:scale-95 shadow-md flex justify-center items-center gap-2"
+                                disabled={isSubmitLoading}
+                                className="w-full bg-white/20 hover:bg-white/30 text-white font-medium py-3 px-4 rounded-xl border border-white/20 transition-all duration-300 ease-in-out active:scale-95 shadow-md flex justify-center items-center gap-2 disabled:opacity-70 disabled:active:scale-100"
                             >
-                                Đăng ký tài khoản <UserPlus className="w-4 h-4" />
+                                {isSubmitLoading ? (
+                                    <div className="w-5 h-5 rounded-full border-2 border-white border-t-transparent animate-spin" />
+                                ) : (
+                                    <>Đăng ký tài khoản <UserPlus className="w-4 h-4" /></>
+                                )}
                             </button>
                         )}
                     </div>

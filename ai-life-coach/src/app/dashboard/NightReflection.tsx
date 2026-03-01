@@ -9,24 +9,22 @@ export default function NightReflection({ hasTasks }: { hasTasks: boolean }) {
     const containerRef = useRef<HTMLDivElement>(null);
 
     const handleAction = (e: React.MouseEvent | React.KeyboardEvent) => {
-        if (!hasTasks) {
-            e.preventDefault();
+        e.preventDefault();
 
-            const rect = containerRef.current?.getBoundingClientRect();
-            const yOrigin = rect ? (rect.top + rect.height / 2) / window.innerHeight : 0.9;
-            const xOrigin = rect ? (rect.left + rect.width / 2) / window.innerWidth : 0.5;
+        const rect = containerRef.current?.getBoundingClientRect();
+        const yOrigin = rect ? (rect.top + rect.height / 2) / window.innerHeight : 0.9;
+        const xOrigin = rect ? (rect.left + rect.width / 2) / window.innerWidth : 0.5;
 
-            confetti({
-                particleCount: 100,
-                spread: 70,
-                origin: { x: xOrigin, y: yOrigin },
-                colors: ['#4f46e5', '#a855f7', '#ffffff'],
-                zIndex: 100
-            });
+        confetti({
+            particleCount: 100,
+            spread: 70,
+            origin: { x: xOrigin, y: yOrigin },
+            colors: ['#4f46e5', '#a855f7', '#ffffff'],
+            zIndex: 100
+        });
 
-            setShowToast(true);
-            setTimeout(() => setShowToast(false), 4000);
-        }
+        setShowToast(true);
+        setTimeout(() => setShowToast(false), 4000);
     };
 
     return (
