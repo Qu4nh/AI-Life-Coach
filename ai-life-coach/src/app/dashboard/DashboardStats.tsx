@@ -8,39 +8,42 @@ export default function DashboardStats() {
     const [isExpanded, setIsExpanded] = useState(false);
 
     return (
-        <motion.div
-            layout
-            className={`liquid-glass rounded-2xl mb-8 relative overflow-hidden group transition-all duration-300 ${isExpanded ? 'w-full' : 'w-fit'}`}
-        >
-            <div className="absolute top-[-50%] right-[-10%] w-[300px] h-[300px] bg-purple-500/10 rounded-full filter blur-[80px] pointer-events-none"></div>
+        <div className="mb-8 relative z-10">
+            {/* Toggle Button */}
+            <button
+                onClick={() => setIsExpanded(!isExpanded)}
+                className="liquid-glass flex flex-row items-center gap-4 text-left group hover:opacity-100 transition-opacity whitespace-nowrap px-6 py-3 rounded-full w-fit relative z-20"
+            >
+                <div className="flex items-center gap-3">
+                    <Activity className="w-5 h-5 text-purple-400" />
+                    <h2 className="text-lg font-bold">Phân tích Hiệu suất</h2>
+                    <span className="px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 text-[10px] font-semibold border border-purple-500/20 mx-2">
+                        Tuần này
+                    </span>
+                </div>
 
-            <div className="relative z-10 px-6 py-3 md:px-8 md:py-4">
-                <button
-                    onClick={() => setIsExpanded(!isExpanded)}
-                    className="flex flex-row items-center gap-6 text-left group-hover:opacity-100 transition-opacity whitespace-nowrap w-full"
+                <motion.div
+                    animate={{ rotate: isExpanded ? 180 : 0 }}
+                    transition={{ duration: 0.3 }}
                 >
-                    <div className="flex items-center gap-3">
-                        <Activity className="w-5 h-5 text-purple-400" />
-                        <h2 className="text-lg font-bold">Phân tích Hiệu suất</h2>
-                        <span className="px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 text-[10px] font-semibold border border-purple-500/20 ml-2">
-                            Tuần này
-                        </span>
-                    </div>
+                    <ChevronDown className="w-4 h-4 text-white/60 group-hover:text-white transition-colors" />
+                </motion.div>
+            </button>
 
-                    <div className={`transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}>
-                        <ChevronDown className="w-4 h-4 text-white/60 group-hover:text-white transition-colors" />
-                    </div>
-                </button>
+            {/* Expandable Stats Panel */}
+            <AnimatePresence>
+                {isExpanded && (
+                    <motion.div
+                        initial={{ height: 0, opacity: 0, y: -20 }}
+                        animate={{ height: "auto", opacity: 1, y: 0 }}
+                        exit={{ height: 0, opacity: 0, y: -20 }}
+                        transition={{ type: "spring", bounce: 0, duration: 0.4 }}
+                        className="overflow-hidden mt-4"
+                    >
+                        <div className="liquid-glass rounded-3xl p-6 md:p-8 relative overflow-hidden">
+                            <div className="absolute top-[-50%] right-[-10%] w-[300px] h-[300px] bg-purple-500/10 rounded-full filter blur-[80px] pointer-events-none"></div>
 
-                <AnimatePresence>
-                    {isExpanded && (
-                        <motion.div
-                            initial={{ height: 0, opacity: 0, marginTop: 0 }}
-                            animate={{ height: "auto", opacity: 1, marginTop: 24 }}
-                            exit={{ height: 0, opacity: 0, marginTop: 0 }}
-                            className="overflow-hidden"
-                        >
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <div className="relative z-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                                 {/* Stat 1: Năng suất */}
                                 <div className="bg-white/5 border border-white/10 p-5 rounded-2xl hover:bg-white/10 transition-colors">
                                     <div className="flex items-center justify-between mb-4">
@@ -115,10 +118,10 @@ export default function DashboardStats() {
                                     </div>
                                 </div>
                             </div>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-            </div>
-        </motion.div>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </div>
     );
 }
