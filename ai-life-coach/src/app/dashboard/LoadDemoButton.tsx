@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { loadMockData } from './actions';
 import { Sparkles } from 'lucide-react';
 
-export default function LoadDemoButton() {
+export default function LoadDemoButton({ onLoadSuccess }: { onLoadSuccess?: () => void }) {
     const [loading, setLoading] = useState(false);
     const router = useRouter();
 
@@ -17,6 +17,7 @@ export default function LoadDemoButton() {
             if (result && !result.success) {
                 alert('Lỗi tạo dữ liệu demo: ' + result.error);
             } else {
+                if (onLoadSuccess) onLoadSuccess();
                 localStorage.removeItem('ai-coach-tour-seen');
                 router.refresh();
                 setTimeout(() => window.dispatchEvent(new Event('restart-tour')), 800);

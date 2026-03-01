@@ -439,11 +439,12 @@ export default function GuidedTour({ hasGoals }: { hasGoals?: boolean }) {
 
                         <div className="flex flex-row gap-3 mb-6 w-full">
                             <div className="flex-1 min-w-0 [&>button]:w-full [&>button]:h-full [&>button]:px-2">
-                                <LoadDemoButton />
+                                <LoadDemoButton onLoadSuccess={() => setShowWelcome(false)} />
                             </div>
                             <Link
                                 href="/onboarding"
-                                className="flex-1 min-w-0 px-2 py-3 bg-white/10 hover:bg-white/15 text-white text-sm font-semibold rounded-2xl transition-all flex items-center justify-center gap-2"
+                                onClick={() => setShowWelcome(false)}
+                                className="liquid-glass-btn flex-1 min-w-0 px-2 py-3 bg-white/10 hover:bg-white/15 text-white text-sm font-semibold rounded-2xl transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-2"
                             >
                                 <Target className="w-4 h-4 text-indigo-400 shrink-0" />
                                 <span className="truncate">Tạo Mục Tiêu</span>
