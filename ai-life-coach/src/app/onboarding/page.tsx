@@ -32,7 +32,6 @@ export default function OnboardingPage() {
     const [roadmapData, setRoadmapData] = useState<any>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
-    // States for rotating loading messages
     const [loadingMessageIndex, setLoadingMessageIndex] = useState(0);
 
     const LOADING_MESSAGES = [
@@ -44,7 +43,7 @@ export default function OnboardingPage() {
         "Gần xong rồi, lộ trình dài hạn đang thành hình...",
         "Xin chờ một chút, đang tinh chỉnh bước cuối...",
         "Nà Ná Na Na ....",
-        "Tips: Hệ thống sẽ tạo lộ trình vài tuần, đừng lo, task mới sẽ được thêm khi tổng kết tuần",
+        "Tips: Đừng lo, task mới sẽ được thêm khi tổng kết tuần",
         "Đang cook cho bạn một lộ trình xịn xò..."
     ];
 
@@ -90,7 +89,7 @@ export default function OnboardingPage() {
             if (step === 0) {
                 botResponse = 'Tiếp theo, bạn muốn hoàn thành mục tiêu này vào **ngày bao nhiêu**? (Vd: 31/12/2026. Nếu chưa có ngày cụ thể, cứ gõ "Bỏ qua" để hệ thống tự tính nhé) 📅';
             } else if (step === 1) {
-                botResponse = 'Cho mình hỏi thêm, bạn có thể dành **thời lượng mỗi ngày** (vd: 30 phút/ngày hoặc 1 giờ/ngày) cho mục tiêu này là bao nhiêu? ⏰';
+                botResponse = 'Cho mình hỏi thêm, bạn có thể dành **thời lượng mỗi ngày** (vd: 30 phút/ngày hoặc 4 ngày/tuần hoặc cả hai) cho mục tiêu này là bao nhiêu? ⏰';
             } else if (step === 2) {
                 botResponse = 'Chốt! Vậy **độ quen thuộc** của bạn với lĩnh vực này thế nào? (vd: người mới bắt đầu bảng chữ cái, đã có nền tảng, học lại từ đầu, đã học đến...) 🎓';
             } else if (step === 3) {
@@ -322,7 +321,7 @@ export default function OnboardingPage() {
                             </AnimatePresence>
 
                             <p className="mt-4 text-white/50 text-sm text-center max-w-sm">
-                                Quá trình này có thể mất từ 1 - 3 phút vì AI đang tạo danh sách lộ trình rất chi tiết cho từng ngày. Tốc độ hơi rùa tí nhưng mà chắc chắn nó chất đó Sếp ạ!
+                                Quá trình này có thể mất từ 1 - 3 phút vì AI đang tạo danh sách lộ trình rất chi tiết cho từng ngày. Tốc độ hơi rùa tí nhưng mà chắc chắn ạ!
                             </p>
                         </motion.div>
                     ) : (
