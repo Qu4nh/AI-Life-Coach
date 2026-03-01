@@ -2,10 +2,26 @@
 
 import { useState } from 'react';
 import { TrendingUp, Flame, Zap, Target, Activity, ChevronDown } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, Variants } from 'framer-motion';
 
 export default function DashboardStats() {
     const [isExpanded, setIsExpanded] = useState(false);
+
+    const containerVariants: Variants = {
+        hidden: { opacity: 0 },
+        show: {
+            opacity: 1,
+            transition: {
+                staggerChildren: 0.1,
+                delayChildren: 0.2
+            }
+        }
+    };
+
+    const itemVariants: Variants = {
+        hidden: { opacity: 0, y: 20, scale: 0.95 },
+        show: { opacity: 1, y: 0, scale: 1, transition: { type: "spring", bounce: 0.4, duration: 0.6 } }
+    };
 
     return (
         <div className="mb-8 relative z-10">
@@ -41,11 +57,16 @@ export default function DashboardStats() {
                         className="overflow-hidden mt-4"
                     >
                         <div className="liquid-glass rounded-3xl p-6 md:p-8 relative overflow-hidden">
-                            <div className="absolute top-[-50%] right-[-10%] w-[300px] h-[300px] bg-purple-500/10 rounded-full filter blur-[80px] pointer-events-none"></div>
+                            <div className="absolute top-[-50%] right-[-10%] w-[300px] h-[300px] bg-purple-500/10 rounded-full filter blur-[80px] pointer-events-none animate-glow-pulse"></div>
 
-                            <div className="relative z-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <motion.div
+                                variants={containerVariants}
+                                initial="hidden"
+                                animate="show"
+                                className="relative z-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
+                            >
                                 {/* Stat 1: Năng suất */}
-                                <div className="bg-white/5 border border-white/10 p-5 rounded-2xl hover:bg-white/10 transition-colors">
+                                <motion.div variants={itemVariants} className="bg-white/5 border border-white/10 p-5 rounded-2xl hover:bg-white/10 transition-colors">
                                     <div className="flex items-center justify-between mb-4">
                                         <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center">
                                             <TrendingUp className="w-5 h-5 text-blue-400" />
@@ -60,10 +81,10 @@ export default function DashboardStats() {
                                     <div className="w-full bg-white/5 rounded-full h-1.5 mt-4">
                                         <div className="bg-gradient-to-r from-blue-500 to-cyan-400 h-1.5 rounded-full" style={{ width: '85%' }}></div>
                                     </div>
-                                </div>
+                                </motion.div>
 
                                 {/* Stat 2: Chuỗi ngày */}
-                                <div className="bg-white/5 border border-white/10 p-5 rounded-2xl hover:bg-white/10 transition-colors">
+                                <motion.div variants={itemVariants} className="bg-white/5 border border-white/10 p-5 rounded-2xl hover:bg-white/10 transition-colors">
                                     <div className="flex items-center justify-between mb-4">
                                         <div className="w-10 h-10 rounded-full bg-orange-500/20 flex items-center justify-center">
                                             <Flame className="w-5 h-5 text-orange-400" />
@@ -80,10 +101,10 @@ export default function DashboardStats() {
                                             <div key={day} className={`h-1.5 flex-1 rounded-full bg-orange-500`}></div>
                                         ))}
                                     </div>
-                                </div>
+                                </motion.div>
 
                                 {/* Stat 3: Năng lượng */}
-                                <div className="bg-white/5 border border-white/10 p-5 rounded-2xl hover:bg-white/10 transition-colors">
+                                <motion.div variants={itemVariants} className="bg-white/5 border border-white/10 p-5 rounded-2xl hover:bg-white/10 transition-colors">
                                     <div className="flex items-center justify-between mb-4">
                                         <div className="w-10 h-10 rounded-full bg-yellow-500/20 flex items-center justify-center">
                                             <Zap className="w-5 h-5 text-yellow-400" />
@@ -98,10 +119,10 @@ export default function DashboardStats() {
                                     <div className="w-full bg-white/5 rounded-full h-1.5 mt-4">
                                         <div className="bg-gradient-to-r from-yellow-500 to-amber-500 h-1.5 rounded-full" style={{ width: '84%' }}></div>
                                     </div>
-                                </div>
+                                </motion.div>
 
                                 {/* Stat 4: Hoàn thành */}
-                                <div className="bg-white/5 border border-white/10 p-5 rounded-2xl hover:bg-white/10 transition-colors">
+                                <motion.div variants={itemVariants} className="bg-white/5 border border-white/10 p-5 rounded-2xl hover:bg-white/10 transition-colors">
                                     <div className="flex items-center justify-between mb-4">
                                         <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center">
                                             <Target className="w-5 h-5 text-emerald-400" />
@@ -116,8 +137,8 @@ export default function DashboardStats() {
                                     <div className="w-full bg-white/5 rounded-full h-1.5 mt-4">
                                         <div className="bg-gradient-to-r from-emerald-500 to-teal-400 h-1.5 rounded-full" style={{ width: '65%' }}></div>
                                     </div>
-                                </div>
-                            </div>
+                                </motion.div>
+                            </motion.div>
                         </div>
                     </motion.div>
                 )}

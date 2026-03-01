@@ -13,6 +13,7 @@ import LoadDemoButton from './LoadDemoButton';
 import GuidedTour from './GuidedTour';
 import LogoutButton from './LogoutButton';
 import DashboardStats from './DashboardStats';
+import AnimatedGoalCard from './AnimatedGoalCard';
 import { getEvents } from './calendarActions';
 import { hasCheckedInToday } from './actions';
 import { Hourglass, Moon } from 'lucide-react';
@@ -125,8 +126,8 @@ export default async function DashboardPage() {
             <GuidedTour hasGoals={!!(goals && goals.length > 0)} />
 
 
-            <div className="fixed top-[-10%] left-[-10%] w-[600px] h-[600px] bg-indigo-600/20 rounded-full mix-blend-screen filter blur-[120px] pointer-events-none"></div>
-            <div className="fixed bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-rose-600/10 rounded-full mix-blend-screen filter blur-[100px] pointer-events-none delay-1000"></div>
+            <div className="fixed top-[-10%] left-[-10%] w-[600px] h-[600px] bg-indigo-600/20 rounded-full mix-blend-screen filter blur-[120px] pointer-events-none animate-glow-pulse"></div>
+            <div className="fixed bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-rose-600/10 rounded-full mix-blend-screen filter blur-[100px] pointer-events-none animate-glow-pulse" style={{ animationDelay: '2s' }}></div>
 
             <main className="w-full max-w-[1600px] mx-auto px-4 py-8 sm:px-6 lg:px-8 lg:py-12 space-y-8 z-10 relative">
                 <header className="mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -160,9 +161,13 @@ export default async function DashboardPage() {
                 )}
 
                 {goals && goals.map((goal, idx) => (
-                    <div key={goal.id} data-tour={idx === 0 ? 'goal' : undefined} className="group liquid-glass p-6 md:p-8 lg:p-10 rounded-3xl relative overflow-hidden mb-6 last:mb-0">
-
-                        <div className="absolute top-[-50%] right-[-10%] w-[300px] h-[300px] bg-indigo-500/10 rounded-full filter blur-[80px] pointer-events-none"></div>
+                    <AnimatedGoalCard
+                        key={goal.id}
+                        index={idx}
+                        data-tour={idx === 0 ? 'goal' : undefined}
+                        className="group liquid-glass p-6 md:p-8 lg:p-10 rounded-3xl relative overflow-hidden mb-6 last:mb-0"
+                    >
+                        <div className="absolute top-[-50%] right-[-10%] w-[300px] h-[300px] bg-indigo-500/10 rounded-full filter blur-[80px] pointer-events-none animate-glow-pulse"></div>
                         <div className="relative z-10">
                             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-2 gap-3">
                                 <div className="text-sm font-semibold text-indigo-400 uppercase tracking-wide">Mục tiêu</div>
@@ -176,7 +181,7 @@ export default async function DashboardPage() {
                             </div>
                             <p className="text-white/70 text-sm md:text-base max-w-3xl">{goal.description}</p>
                         </div>
-                    </div>
+                    </AnimatedGoalCard>
                 ))}
 
 
