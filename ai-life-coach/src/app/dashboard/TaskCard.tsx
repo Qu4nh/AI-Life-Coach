@@ -32,7 +32,9 @@ export default function TaskCard({ task }: { task: any }) {
     let noteInfo = restContent;
 
     if (restContent.includes('Bắt đầu:') || restContent.includes('Thời lượng:')) {
-        const lines = restContent.split('\n');
+        // Normalize: handle both literal "\n" text and actual newline chars
+        const normalized = restContent.replace(/\\n/g, '\n');
+        const lines = normalized.split('\n');
         const timeLine = lines[0];
         const timePartsArray = timeLine.split(' | ');
         timePartsArray.forEach((p: string) => {
@@ -73,7 +75,7 @@ export default function TaskCard({ task }: { task: any }) {
     const scaleRightIcon = useTransform(x, [30, 120], [0.6, 1.3]);
 
     // Xử lý logic vuốt (swipe-to-action) qua Framer Motion.
-    // Kết hợp độ lệch (offset) và gia tốc (velocity) để phán đoán thao tác người dùng (Vuốt hoàn thành / Dời lịch).
+    // Phán đoán thao tác người dùng (Vuốt hoàn thành / Dời lịch).
     const handleDragEnd = async (e: any, info: PanInfo) => {
         const offset = info.offset.x;
         const velocity = info.velocity.x;
@@ -122,8 +124,6 @@ export default function TaskCard({ task }: { task: any }) {
         }
     };
 
-    // Đẩy tín hiệu cập nhật trạng thái Task và Năng lượng (Energy Snapshot) lên Supabase DB.
-    // Giao diện đã được update theo cơ chế Optimistic UI trước bước này để đảm bảo độ mượt.
     const flushActionToBackend = async (energyRate?: number) => {
         try {
             if (energyRate !== undefined) {

@@ -102,7 +102,8 @@ export default function CalendarWidget({ initialEvents }: CalendarWidgetProps) {
                 const restParts = e.content.split(' - ').slice(1);
                 const restContent = restParts.join(' - ');
                 if (restContent.includes('Bắt đầu:') || restContent.includes('Thời lượng:')) {
-                    const lines = restContent.split('\n');
+                    const normalized = restContent.replace(/\\n/g, '\n');
+                    const lines = normalized.split('\n');
                     const timePartsArray = lines[0].split(' | ');
                     timePartsArray.forEach(p => {
                         if (p.startsWith('Bắt đầu: ')) timeInfo = p.replace('Bắt đầu: ', '');
@@ -190,7 +191,7 @@ export default function CalendarWidget({ initialEvents }: CalendarWidgetProps) {
         if (e.is_task) {
             return parseTaskContent(e.content || '', true, e.title);
         }
-        // For events/deadlines: title is always e.title, note is e.description
+
         return {
             title: e.title || '',
             note: e.description || '',

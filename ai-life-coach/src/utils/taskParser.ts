@@ -4,7 +4,7 @@ export interface TaskDisplayInfo {
     note: string;
     time: string;
     duration: string;
-    timeValue: number; 
+    timeValue: number;
 }
 
 
@@ -15,18 +15,20 @@ export function parseTaskContent(content: string, isTask: boolean = true, titleF
     let note = '';
     let time = '';
     let duration = '';
-    let timeValue = 9999; 
+    let timeValue = 9999;
 
     if (isTask) {
-        
+
         const dashIndex = fullContent.indexOf(' - ');
         if (dashIndex !== -1) {
             title = fullContent.substring(0, dashIndex);
             let restContent = fullContent.substring(dashIndex + 3);
 
             if (restContent.includes('Bắt đầu:') || restContent.includes('Thời lượng:')) {
-                const lines = restContent.split('\n');
-                const firstLine = lines[0]; 
+                // Normalize: handle both literal "\n" text and actual newline chars
+                const normalized = restContent.replace(/\\n/g, '\n');
+                const lines = normalized.split('\n');
+                const firstLine = lines[0];
                 const timeParts = firstLine.split(' | ');
 
                 timeParts.forEach(part => {
@@ -38,7 +40,7 @@ export function parseTaskContent(content: string, isTask: boolean = true, titleF
                     }
                 });
 
-                
+
                 if (lines.length > 1) {
                     const remainingLines = lines.slice(1).join('\n').trim();
                     if (remainingLines.startsWith('Chi tiết:')) {
@@ -48,7 +50,7 @@ export function parseTaskContent(content: string, isTask: boolean = true, titleF
                     }
                 }
             } else {
-                
+
                 note = restContent;
             }
         }
@@ -57,7 +59,7 @@ export function parseTaskContent(content: string, isTask: boolean = true, titleF
         note = content && content !== titleFallback ? content : '';
     }
 
-    
+
     if (time) {
         const timeMatch = time.match(/(\d{1,2})[:hH](\d{2})?/i);
         if (timeMatch) {
