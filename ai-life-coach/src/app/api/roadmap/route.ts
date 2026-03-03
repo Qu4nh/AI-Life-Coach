@@ -65,7 +65,8 @@ Cấu trúc JSON bắt buộc:
 {
   "is_nonsense": false,
   "title": "Tên mục tiêu bao quát nhất",
-  "description": "Mô tả lộ trình CÁ NHÂN HÓA",
+  "description": "Mô tả NGẮN GỌN (1-2 câu) về mục tiêu và định hướng tổng quan. KHÔNG viết lời chào hay giới thiệu dài.",
+  "introduction": "Lời giới thiệu ấm áp, dài hơn, giải thích tổng quan lộ trình cho người dùng",
   "target_date": "YYYY-MM-DD",
   "tasks": [
     {

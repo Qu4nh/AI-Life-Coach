@@ -179,7 +179,7 @@ export default function OnboardingPage() {
 
                     <div className="liquid-glass rounded-3xl p-6 md:p-8 shadow-2xl mb-8">
                         <h2 className="text-2xl font-bold text-indigo-300 mb-2">{roadmapData.title}</h2>
-                        <p className="text-white/70 mb-8 leading-relaxed">{roadmapData.description}</p>
+                        <p className="text-white/70 mb-8 leading-relaxed">{roadmapData.introduction || roadmapData.description}</p>
 
                         <div className="space-y-4">
                             {roadmapData.tasks?.map((task: any, index: number) => (

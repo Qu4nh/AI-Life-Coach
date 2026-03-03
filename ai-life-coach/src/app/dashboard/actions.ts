@@ -395,19 +395,20 @@ export async function regenerateRoadmap() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) throw new Error('Not authenticated');
 
-    // === MULTI-GOAL ORCHESTRATION: Lấy TẤT CẢ mục tiêu ===
+    // === MULTI-GOAL ORCHESTRATION ===
     const { data: allGoals } = await supabase
         .from('goals').select('*').eq('user_id', user.id);
     if (!allGoals || allGoals.length === 0) throw new Error('Chưa có mục tiêu nào');
 
     const allGoalIds = allGoals.map(g => g.id);
 
-    // Lấy TẤT CẢ tasks thuộc MỌI goal
     const { data: allTasks } = await supabase
         .from('tasks').select('*').in('goal_id', allGoalIds);
 
     const completed = (allTasks || []).filter(t => t.status === 'completed');
     const pending = (allTasks || []).filter(t => t.status === 'pending');
+
+    if (pending.length === 0) throw new Error('Không có task nào để sắp xếp lại');
 
     const today = getVietnamToday();
     const { data: logs } = await supabase
@@ -447,6 +448,13 @@ export async function regenerateRoadmap() {
         .map(e => `${e.date}: ${e.title}`)
         .join('\n');
 
+    // Build task list for AI (with index, NOT id)
+    const taskListForAI = pending.map((t, i) => {
+        const taskTitle = t.content.split(' - ')[0];
+        const goalObj = allGoals.find(g => g.id === t.goal_id);
+        return `[Task ${i}] "${taskTitle}" | Goal: "${goalObj?.title || '?'}" | Energy: ${t.energy_required || 3} | Current date: ${t.due_date || 'none'}`;
+    }).join('\n');
+
     const { GoogleGenerativeAI, SchemaType } = await import('@google/generative-ai');
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
     const model = genAI.getGenerativeModel({
@@ -456,128 +464,95 @@ export async function regenerateRoadmap() {
             responseSchema: {
                 type: SchemaType.OBJECT,
                 properties: {
-                    tasks: {
+                    schedule: {
                         type: SchemaType.ARRAY,
                         items: {
                             type: SchemaType.OBJECT,
                             properties: {
-                                goal_index: {
+                                task_index: {
                                     type: SchemaType.INTEGER,
-                                    description: "Index (0-based) of the goal this task belongs to, matching the DANH SÁCH MỤC TIÊU order"
+                                    description: "Original index of the task (0-based, matching the TASK LIST order)"
                                 },
-                                date: {
+                                new_date: {
                                     type: SchemaType.STRING,
-                                    description: "Date in YYYY-MM-DD format"
+                                    description: "New assigned date in YYYY-MM-DD format"
                                 },
-                                title: {
-                                    type: SchemaType.STRING,
-                                    description: "Short title of the task"
-                                },
-                                description: {
-                                    type: SchemaType.STRING,
-                                    description: "Detailed description. Line 1: 'Bắt đầu: HH:MM | Thời lượng: X giờ/phút', Line 2: 'Chi tiết: ...'"
-                                },
-                                energy_required: {
+                                new_priority: {
                                     type: SchemaType.INTEGER,
-                                    description: "Energy level required (1-5)"
+                                    description: "New priority order within the day (1 = most important)"
                                 }
                             },
-                            required: ["goal_index", "date", "title", "description", "energy_required"]
+                            required: ["task_index", "new_date", "new_priority"]
                         },
-                        description: "List of tasks across ALL goals, intelligently interleaved on the same timeline."
+                        description: "Rescheduled assignments for ALL existing tasks. Must contain exactly the same number of items as the input task list."
                     },
                     coach_note: {
                         type: SchemaType.STRING,
-                        description: "A short encouraging note from the AI coach about the multi-goal balance"
+                        description: "A short encouraging note explaining why you rearranged this way"
                     }
                 },
-                required: ["tasks", "coach_note"]
+                required: ["schedule", "coach_note"]
             }
         }
     });
 
-    // Build multi-goal context
     const goalsContext = allGoals.map((g, i) => {
         const goalCompleted = completed.filter(t => t.goal_id === g.id);
         const goalPending = pending.filter(t => t.goal_id === g.id);
         return `[Mục tiêu ${i}] "${g.title}"
-  Mô tả: ${g.description || 'Không có'}
   Deadline: ${g.deadline || 'Không có'}
-  Đã xong: ${goalCompleted.length} task (${goalCompleted.map((t: any) => t.content.split(' - ')[0]).join(', ') || 'chưa có'})
-  Đang chờ: ${goalPending.length} task`;
+  Đã xong: ${goalCompleted.length} | Đang chờ: ${goalPending.length}`;
     }).join('\n\n');
 
-    const prompt = `Bạn là AI Life Coach - NHẠC TRƯỞNG THẤU CẢM, phân bổ NHIỀU MỤC TIÊU đan xen trên CÙNG 1 TIMELINE.
-Nguyên tắc tối thượng: "Sự bền bỉ quan trọng hơn cường độ" (Consistency > Intensity).
+    const prompt = `Bạn là AI Life Coach - CHỈ SẮP XẾP LẠI lịch trình, KHÔNG tạo task mới, KHÔNG thay đổi nội dung task.
 
 HÔM NAY: ${today}
-SỐ LƯỢNG MỤC TIÊU: ${allGoals.length}
 
-=== DANH SÁCH MỤC TIÊU (Multi-Goal Context) ===
+=== MỤC TIÊU ===
 ${goalsContext}
 
+=== DANH SÁCH TASK HIỆN TẠI (KHÔNG ĐƯỢC THAY ĐỔI NỘI DUNG) ===
+${taskListForAI}
+
 NĂNG LƯỢNG TRUNG BÌNH 7 NGÀY: ${avgEnergy}/5
-GHI CHÚ CẢM XÚC GẦN ĐÂY:
-${recentNotes || 'Không có ghi chú'}
+GHI CHÚ GẦN ĐÂY:
+${recentNotes || 'Không có'}
 
-=== VÙNG CẤM (Hard Constraints - KHÔNG XẾP TASK VÀO CÁC NGÀY NÀY) ===
-${hardConstraints || 'Không có ràng buộc cứng nào.'}
-TUYỆT ĐỐI KHÔNG xếp task học tập/làm việc vào các ngày thi cử/sự kiện ở trên. Đó là "Vùng cấm".
+=== NGÀY CÓ DEADLINE / SỰ KIỆN CỨNG ===
+${hardConstraints || 'Không có'}
+Các ngày này ĐÃ CÓ sự kiện/deadline chiếm 2-5 giờ. VẪN CÓ THỂ xếp task nhẹ (energy 1-2) vào ngày đó, nhưng GIẢM TỔNG TẢI xuống ≤ 4 Pin.
 
-=== KÝ ỨC AI COACH (AI PERSISTENT MEMORY) ===
-${memoryContext || 'Chưa có ký ức nào (phiên đầu tiên).'}
+=== KÝ ỨC AI ===
+${memoryContext || 'Chưa có'}
 
-=== TRIẾT LÝ MULTI-GOAL ORCHESTRATION ===
-Bạn là "nhạc trưởng" phân bổ Pin cho NHIỀU mục tiêu:
-- TỔNG PIN 1 NGÀY TỐI ĐA = 8. Tổng energy_required của tất cả task trên cùng 1 ngày KHÔNG ĐƯỢC vượt quá 8.
-- Nếu có 2+ mục tiêu: XEN KẼ ĐỀU, không dồn hết cho 1 goal trong nhiều ngày liên tục.
-- MỤC TIÊU CÓ DEADLINE GẦN HƠN → được ưu tiên tỷ trọng Pin cao hơn.
-- Mỗi task PHẢI có "goal_index" (số nguyên 0-based) tương ứng với thứ tự trong DANH SÁCH MỤC TIÊU ở trên.
-
-=== TRIẾT LÝ ENERGY MANAGEMENT & GUILT-FREE ===
-- Nếu năng lượng trung bình THẤP (< 2.5): Giảm mạnh cường độ, chủ yếu Micro-actions nhẹ nhàng (energy 1-2), nhiều ngày nghỉ.
-- Nếu năng lượng TRUNG BÌNH (2.5-3.5): Giữ nhịp ổn định, xen kẽ nặng và nhẹ.
-- Nếu năng lượng CAO (> 3.5): Có thể tăng cường độ nhưng VẪN giữ ngày nghỉ xen kẽ.
-
-=== QUY TẮC PHÂN BỔ TASKS ===
-- LÊN LỊCH TỪNG TASK GẮN VỚI NGÀY CHÍNH XÁC, bắt đầu từ ${today}.
-- TUYỆT ĐỐI KHÔNG BẮT BUỘC NGÀY NÀO CŨNG PHẢI CÓ TASK. TẠO NGÀY NGHỈ THẬT.
-- PHÂN BỔ LINH HOẠT: Có ngày nghỉ toàn tập, có ngày 1 task nhẹ, có ngày dồn nhiều.
-- TẠO NHỊP THỞ: Xen kẽ ngày nặng → nhẹ → nghỉ hoàn toàn.
-- "date": format "YYYY-MM-DD".
-- "title": CHỈ TÊN NGẮN GỌN. KHÔNG chèn giờ giấc.
-- "description": DÒNG ĐẦU: "Bắt đầu: HH:MM | Thời lượng: X giờ/phút". XUỐNG DÒNG: "Chi tiết: <hướng dẫn>".`;
+=== QUY TẮC SẮP XẾP ===
+1. GIỮ NGUYÊN SỐ LƯỢNG TASK: Phải trả về ĐÚNG ${pending.length} mục trong "schedule", mỗi mục ứng với 1 task_index từ 0 đến ${pending.length - 1}.
+2. CHỈ THAY ĐỔI NGÀY VÀ THỨ TỰ ƯU TIÊN — không tạo task mới, không xóa task cũ.
+3. TỔNG PIN 1 NGÀY ≤ 8 (tổng energy_required trên cùng 1 ngày). Ngày có deadline: ≤ 4.
+4. Xen kẽ ngày nặng → nhẹ → nghỉ hoàn toàn.
+5. Nếu có 2+ mục tiêu: xen kẽ đều, không dồn 1 goal nhiều ngày liên tục.
+6. Ngày có deadline/sự kiện: ưu tiên task nhẹ (energy 1-2), tránh task nặng.
+7. Bắt đầu từ ngày ${today}, phân bổ 5-10 ngày tới.`;
 
     const result = await model.generateContent(prompt);
     const data = JSON.parse(result.response.text());
 
-    if (!data.tasks || !Array.isArray(data.tasks)) {
+    if (!data.schedule || !Array.isArray(data.schedule)) {
         throw new Error('AI trả về dữ liệu không hợp lệ');
     }
 
-    for (const goalId of allGoalIds) {
-        await supabase.from('tasks')
-            .delete()
-            .eq('goal_id', goalId)
-            .eq('status', 'pending');
+    for (const item of data.schedule) {
+        const idx = item.task_index;
+        if (idx < 0 || idx >= pending.length) continue;
+
+        const task = pending[idx];
+        const newDate = item.new_date && item.new_date.match(/^\d{4}-\d{2}-\d{2}$/) ? item.new_date : task.due_date;
+
+        await supabase.from('tasks').update({
+            due_date: newDate,
+            priority: item.new_priority || task.priority,
+        }).eq('id', task.id);
     }
-
-    const newTasks = data.tasks.map((t: any, idx: number) => {
-        const goalIdx = Math.min(Math.max(0, t.goal_index || 0), allGoals.length - 1);
-        const targetGoal = allGoals[goalIdx];
-        const taskDate = t.date && t.date.match(/^\d{4}-\d{2}-\d{2}$/) ? t.date : today;
-        return {
-            user_id: user.id,
-            goal_id: targetGoal.id,
-            content: t.description ? `${t.title} - ${t.description}` : t.title,
-            priority: idx + 1,
-            energy_required: Math.min(5, Math.max(1, t.energy_required || 3)),
-            status: 'pending',
-            due_date: taskDate,
-        };
-    });
-
-    await supabase.from('tasks').insert(newTasks);
 
     // === AI PERSISTENT MEMORY ===
     const goalNames = allGoals.map(g => g.title).join(' + ');
@@ -585,13 +560,13 @@ Bạn là "nhạc trưởng" phân bổ Pin cho NHIỀU mục tiêu:
         await supabase.from('ai_memory').insert({
             user_id: user.id,
             type: 'coach_note',
-            content: `[Multi-Goal: ${goalNames}] ${data.coach_note} | Stats: ${completed.length} done, ${newTasks.length} new across ${allGoals.length} goals, avg_energy=${avgEnergy}`,
+            content: `[Reschedule: ${goalNames}] ${data.coach_note} | ${pending.length} tasks rearranged, avg_energy=${avgEnergy}`,
         });
     }
 
     revalidatePath('/dashboard');
 
-    return { success: true, coachNote: data.coach_note || '', taskCount: newTasks.length };
+    return { success: true, coachNote: data.coach_note || '', taskCount: pending.length };
 }
 
 export async function logout() {
