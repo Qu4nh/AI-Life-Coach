@@ -26,7 +26,7 @@ export async function getEvents() {
     return events;
 }
 
-export async function createEvent(title: string, date: string, isHardDeadline: boolean = true) {
+export async function createEvent(title: string, date: string, isHardDeadline: boolean = true, description: string = '') {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
@@ -39,6 +39,7 @@ export async function createEvent(title: string, date: string, isHardDeadline: b
         .insert({
             user_id: user.id,
             title,
+            description: description || null,
             date,
             is_hard_deadline: isHardDeadline
         });
@@ -75,7 +76,26 @@ export async function deleteEvent(eventId: string) {
     return { success: true };
 }
 
-// Auto-create default goal if user has no goals (prevents FK constraint violation on task insert)
+export async function editEvent(eventId: string, title: string, description: string, isHardDeadline: boolean) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
+
+    const { error } = await supabase.from('events').update({
+        title,
+        description: description || null,
+        is_hard_deadline: isHardDeadline
+    }).eq('id', eventId).eq('user_id', user.id);
+
+    if (error) {
+        console.error('Error editing event:', JSON.stringify(error, null, 2));
+        throw new Error(`Failed to edit event: ${error.message}`);
+    }
+
+    revalidatePath('/dashboard');
+    return { success: true };
+}
+
 export async function createCalendarTask(title: string, note: string, dateStr: string, energy: number) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -92,7 +112,7 @@ export async function createCalendarTask(title: string, note: string, dateStr: s
 
     let goalId = goals && goals.length > 0 ? goals[0].id : null;
 
-    // Fallback: auto-create a default goal to satisfy FK constraint
+    // Fallback
     if (!goalId) {
         const { data: newGoal, error: goalError } = await supabase
             .from('goals')

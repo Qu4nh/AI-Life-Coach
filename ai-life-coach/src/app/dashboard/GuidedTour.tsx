@@ -59,7 +59,7 @@ const TOUR_STEPS: TourStep[] = [
         target: '[data-tour="first-task"]',
         icon: Hand,
         title: 'Vuốt Thẻ Nhiệm Vụ ← →',
-        description: 'Thử vuốt thẻ bên dưới! Vuốt TRÁI ✅ để hoàn thành, vuốt PHẢI ❌ để dời lịch. Ngoài ra bạn có thể sắp xếp thẻ theo nhu cầu của mình',
+        description: 'Thử vuốt thẻ bên dưới! Vuốt TRÁI ✅ để hoàn thành, vuốt PHẢI ❌ để dời lịch.\nNgoài ra bạn có thể sắp xếp thẻ theo nhu cầu của mình',
         color: 'from-rose-500 to-pink-500',
         position: 'right',
         scrollTo: true,
@@ -69,7 +69,7 @@ const TOUR_STEPS: TourStep[] = [
         target: '[data-tour="ai-controls"]',
         icon: BrainCircuit,
         title: 'AI Huấn Luyện Viên',
-        description: 'Nhấn "AI Làm mới" để AI phân tích dữ liệu và cấu trúc lại lộ trình. Bật "AI 4:00 AM" để AI tự động làm mỗi đêm khi bạn ngủ. (coming soon :>)',
+        description: 'Nhấn "AI Làm mới" để AI phân tích dữ liệu và cấu trúc lại lộ trình. \nBật "AI 4:00 AM" để AI tự động làm mỗi đêm khi bạn ngủ. (coming soon :>)',
         color: 'from-violet-500 to-purple-500',
         position: 'bottom',
         scrollTo: true,
@@ -78,7 +78,7 @@ const TOUR_STEPS: TourStep[] = [
         target: '[data-tour="calendar"]',
         icon: CalendarDays,
         title: 'Lịch Trình Trực Quan',
-        description: 'Lịch tích hợp hiển thị cả Tasks lẫn Sự kiện cứng (thi cử, deadline). Nhấn vào ngày để thêm sự kiện mới. Nhấn vào sự kiện để xem chi tiết hoặc xóa.',
+        description: 'Lịch tích hợp hiển thị cả nhiệm vụ lẫn deadline cứng (thi cử, họp). \n 💡 Mẹo: Nhấn vào ô NGÀY (hình tròn) để thêm nhanh nhiệm vụ/sự kiện vào ngày đó! Nhấn vào sự kiện để chỉnh sửa hoặc xóa.',
         color: 'from-sky-500 to-blue-500',
         position: 'left',
         scrollTo: true,
@@ -105,7 +105,7 @@ const TOUR_STEPS: TourStep[] = [
         target: '',
         icon: RotateCcw,
         title: 'Sẵn Sàng! 🏁',
-        description: 'Nếu mới bắt đầu, hãy ấn "Nạp Dữ Liệu Demo" hoặc tạo mục tiêu mới để trải nghiệm đầy đủ. Bạn luôn có thể nhấn nút "?" ở góc phải để xem lại hướng dẫn này. Chúc bạn chinh phục mục tiêu! 💪',
+        description: 'Nếu mới bắt đầu, hãy ấn "Nạp Dữ Liệu Demo" hoặc tạo mục tiêu mới để trải nghiệm đầy đủ. \nBạn luôn có thể nhấn nút "?" ở góc phải để xem lại hướng dẫn này. Chúc bạn chinh phục mục tiêu! 💪',
         color: 'from-emerald-500 to-cyan-500',
         position: 'center',
     },
@@ -603,7 +603,7 @@ export default function GuidedTour({ hasGoals }: { hasGoals?: boolean }) {
                                         </div>
 
 
-                                        <p className="text-sm text-white/60 leading-relaxed mb-4 pl-12">{current.description}</p>
+                                        <p className="text-sm text-white/60 leading-relaxed mb-4 pl-12 whitespace-pre-wrap">{current.description}</p>
 
 
                                         {current.hasSwipeDemo && <DemoSwipeCard onSwiped={handleNext} />}

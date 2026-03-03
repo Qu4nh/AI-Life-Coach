@@ -6,7 +6,7 @@ import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, startOfWeek, endOfWeek, isSameMonth, isSameDay, addDays, parseISO, subDays, isSameWeek, addWeeks, subWeeks, isToday } from 'date-fns';
 import { ChevronLeft, ChevronRight, Plus, MapPin, AlignLeft, Calendar as CalendarIcon, X, PlusCircle, Check, Loader2, ListTodo, LayoutGrid, AlertTriangle, Zap, Clock, BatteryWarning, BatteryLow, BatteryMedium, BatteryFull, BatteryCharging, Edit2, Trash2 } from 'lucide-react';
-import { createEvent, deleteEvent, createCalendarTask, deleteCalendarTask } from './calendarActions';
+import { createEvent, editEvent, deleteEvent, createCalendarTask, deleteCalendarTask } from './calendarActions';
 import CustomDropdown from './CustomDropdown';
 import IOSTimePicker from './IOSTimePicker';
 import { createClient } from '@/utils/supabase/client';
@@ -42,6 +42,7 @@ type Event = {
     is_task?: boolean;
     energy_required?: number;
     content?: string;
+    description?: string;
 };
 
 interface CalendarWidgetProps {
@@ -119,8 +120,7 @@ export default function CalendarWidget({ initialEvents }: CalendarWidgetProps) {
             setEditNote(noteInfo);
         } else {
             setEditIsHardDeadline(e.is_hard_deadline);
-
-            setEditNote(e.content?.split(' - ').slice(1).join(' - ') || '');
+            setEditNote(e.description || '');
         }
     };
 
@@ -149,9 +149,12 @@ export default function CalendarWidget({ initialEvents }: CalendarWidgetProps) {
                         : ev
                 ));
             } else {
-
-
-                alert('Chỉnh sửa Sự kiện thông thường đang được phát triển.');
+                await editEvent(editingEvent.id, editEventTitle, editNote, editIsHardDeadline);
+                setEvents(prev => prev.map(ev =>
+                    ev.id === editingEvent.id
+                        ? { ...ev, title: editEventTitle, description: editNote, is_hard_deadline: editIsHardDeadline }
+                        : ev
+                ));
             }
             setEditingEvent(null);
         } catch (error) {
@@ -184,7 +187,17 @@ export default function CalendarWidget({ initialEvents }: CalendarWidgetProps) {
 
 
     const getTaskDisplayInfo = (e: Event) => {
-        return parseTaskContent(e.content || '', e.is_task, e.title);
+        if (e.is_task) {
+            return parseTaskContent(e.content || '', true, e.title);
+        }
+        // For events/deadlines: title is always e.title, note is e.description
+        return {
+            title: e.title || '',
+            note: e.description || '',
+            time: '',
+            duration: '',
+            timeValue: 9999
+        };
     };
 
     // Auto-scroll logic: Tự động cuộn đến ngày hiện hành hoặc thẻ đang được hightlight.
@@ -274,7 +287,10 @@ export default function CalendarWidget({ initialEvents }: CalendarWidgetProps) {
         }
     };
 
-    const onDateClick = (day: Date) => setSelectedDate(day);
+    const onDateClick = (day: Date) => {
+        setSelectedDate(day);
+        setIsAddingEvent(true);
+    };
 
 
     const renderDays = () => {
@@ -371,7 +387,18 @@ export default function CalendarWidget({ initialEvents }: CalendarWidgetProps) {
                                                         </div>
                                                     )}
                                                     {e.is_hard_deadline && <div className="text-red-400 text-[10px] mt-1.5 font-bold border-t border-white/10 pt-1">DEADLINE CỨNG</div>}
-                                                    {e.is_task && <div className={`text-[10px] mt-1.5 font-bold border-t border-white/10 pt-1 ${e.energy_required && e.energy_required > 3 ? 'text-rose-400' : e.energy_required === 3 ? 'text-amber-400' : 'text-emerald-400'}`}>⚡ TỐN {e.energy_required || 3} PIN</div>}
+                                                    {e.is_task && (() => {
+                                                        const en = e.energy_required || 3;
+                                                        const BattIcon = en === 1 ? BatteryWarning : en === 2 ? BatteryLow : en === 3 ? BatteryMedium : en === 4 ? BatteryFull : BatteryCharging;
+                                                        return (
+                                                            <div className={`flex items-center justify-center gap-1 mt-1.5 border-t border-white/10 pt-1 ${en > 3 ? 'text-rose-400' : en === 3 ? 'text-amber-400' : 'text-emerald-400'}`}>
+                                                                <BattIcon className="w-3 h-3" />
+                                                                <span className="flex gap-px">
+                                                                    {[1, 2, 3, 4, 5].map(i => <span key={i} className={`w-1 h-1.5 rounded-[1px] ${i <= en ? 'bg-current' : 'bg-current opacity-20'}`} />)}
+                                                                </span>
+                                                            </div>
+                                                        );
+                                                    })()}
                                                 </div>
                                                 <div className="w-0 h-0 border-l-[4px] border-r-[4px] border-t-[4px] border-l-transparent border-r-transparent border-t-white/20 -mt-[1px]" />
                                             </div>
@@ -476,7 +503,7 @@ export default function CalendarWidget({ initialEvents }: CalendarWidgetProps) {
                         className="flex flex-row sm:flex-col items-center sm:min-w-[60px] cursor-pointer gap-2 sm:gap-1 mt-1 shrink-0"
                         onClick={() => onDateClick(cloneDay)}
                     >
-                        <div className={`w-12 h-12 rounded-full flex flex-col items-center justify-center transition-all ${isToday ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/30' : isSelected ? 'bg-white/10 text-white ring-2 ring-indigo-500/50' : 'bg-white/5 text-white/70 hover:bg-white/10'}`}>
+                        <div className={`w-12 h-12 rounded-full flex flex-col items-center justify-center transition-all ${isToday ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/30' : isSelected ? 'bg-white/10 text-white ring-2 ring-indigo-500/50' : 'bg-white/5 text-white/70 hover:bg-white/10'}`} title="Nh&#7845;n &#273;&#7875; th&#234;m l&#7883;ch tr&#236;nh v&#224;o ng&#224;y n&#224;y">
                             <span className="text-lg font-bold leading-none">{formattedDate}</span>
                         </div>
                         <span className={`text-xs mt-0 sm:mt-1 font-medium sm:font-normal uppercase ${isToday ? 'text-indigo-400' : 'text-white/50'}`}>
@@ -589,7 +616,7 @@ export default function CalendarWidget({ initialEvents }: CalendarWidgetProps) {
                 }
                 await createCalendarTask(newEventTitle, finalNote, dateStr, Math.round(newEnergy));
             } else {
-                await createEvent(newEventTitle, dateStr, isHardDeadline);
+                await createEvent(newEventTitle, dateStr, isHardDeadline, newNote);
             }
 
 
@@ -823,26 +850,43 @@ export default function CalendarWidget({ initialEvents }: CalendarWidgetProps) {
                                             </div>
                                         </>
                                     ) : (
-                                        <div className={`border rounded-xl p-4 cursor-pointer transition-colors ${isHardDeadline ? 'bg-red-500/10 border-red-500/30' : 'bg-white/5 border-white/10 hover:bg-white/10'}`} onClick={() => setIsHardDeadline(!isHardDeadline)}>
-                                            <label className="flex items-start gap-3 cursor-pointer">
-                                                <div className="mt-0.5 pointer-events-none">
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={isHardDeadline}
-                                                        readOnly
-                                                        className="w-5 h-5 rounded border-white/20 bg-black/40 text-red-500 focus:ring-red-500/50"
-                                                    />
+                                        <>
+                                            <div>
+                                                <label className="block text-sm font-medium text-white/70 mb-2">
+                                                    Mô tả / Ghi chú (Tùy chọn)
+                                                </label>
+                                                <textarea
+                                                    value={newNote}
+                                                    onChange={(e) => setNewNote(e.target.value)}
+                                                    placeholder="Ví dụ: Nhớ mang theo CMND, địa chỉ phòng thi..."
+                                                    className="w-full h-20 bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-shadow resize-none custom-scrollbar text-sm"
+                                                />
+                                            </div>
+                                            <div
+                                                className={`border rounded-xl p-4 cursor-pointer transition-colors ${isHardDeadline ? 'bg-red-500/10 border-red-500/30' : 'bg-white/5 border-white/10 hover:bg-white/10'}`}
+                                                onClick={(ev) => { ev.preventDefault(); setIsHardDeadline(v => !v); }}
+                                            >
+                                                <div className="flex items-start gap-3">
+                                                    <div className="mt-0.5">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={isHardDeadline}
+                                                            onChange={() => { }}
+                                                            onClick={(ev) => ev.stopPropagation()}
+                                                            className="w-5 h-5 rounded border-white/20 bg-black/40 text-red-500 focus:ring-red-500/50 pointer-events-none"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <span className={`block font-medium ${isHardDeadline ? 'text-red-400' : 'text-white/80'}`}>
+                                                            Đánh dấu là Deadline Cứng (Cảnh Báo)
+                                                        </span>
+                                                        <span className="block text-sm text-white/50 mt-1">
+                                                            AI sẽ tuyệt đối không xếp thêm Task trùng vào ngày này. Dành cho ngày quá mệt hoặc kẹt lịch cứng.
+                                                        </span>
+                                                    </div>
                                                 </div>
-                                                <div>
-                                                    <span className={`block font-medium ${isHardDeadline ? 'text-red-400' : 'text-white/80'}`}>
-                                                        Đánh dấu là Deadline Cứng (Cảnh Báo)
-                                                    </span>
-                                                    <span className="block text-sm text-white/50 mt-1">
-                                                        AI sẽ tuyệt đối không xếp thêm Task trùng vào ngày này. Dành cho ngày quá mệt hoặc kẹt lịch cứng.
-                                                    </span>
-                                                </div>
-                                            </label>
-                                        </div>
+                                            </div>
+                                        </>
                                     )}
                                 </div>
 

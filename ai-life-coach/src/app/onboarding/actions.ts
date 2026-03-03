@@ -2,6 +2,7 @@
 'use server'
 
 import { createClient } from '@/utils/supabase/server'
+import { regenerateRoadmap } from '@/app/dashboard/actions'
 
 function getVietnamToday(): string {
     return new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Ho_Chi_Minh' });
@@ -23,6 +24,11 @@ export async function saveRoadmap(roadmapData: any) {
             email: user.email,
         }, { onConflict: 'id' })
 
+        // auto-orchestrate true/fasle
+        const { data: existingGoals } = await supabase
+            .from('goals').select('id').eq('user_id', user.id);
+        const hadPreviousGoals = existingGoals && existingGoals.length > 0;
+
         const { data: goal, error: goalError } = await supabase.from('goals').insert({
             user_id: user.id,
             title: roadmapData.title,
@@ -34,7 +40,6 @@ export async function saveRoadmap(roadmapData: any) {
         if (goalError) throw goalError
 
         const tasksToInsert = roadmapData.tasks.map((task: any, index: number) => {
-            // Lấy ngày do AI phân bổ. Nếu AI không sinh field date hoặc sai format, fallback về today.
             const taskDate = task.date && task.date.match(/^\d{4}-\d{2}-\d{2}$/) ? task.date : today;
 
             return {
@@ -51,6 +56,15 @@ export async function saveRoadmap(roadmapData: any) {
 
         if (tasksError) throw tasksError
 
+        // Auto-Orchestrate
+        if (hadPreviousGoals) {
+            try {
+                await regenerateRoadmap();
+            } catch (e) {
+                console.error('[saveRoadmap] Auto-orchestrate failed (non-fatal):', e);
+            }
+        }
+
     } catch (error) {
         console.error('Lỗi khi lưu Roadmap vào Supabase:', error)
         return { success: false, error: 'Có lỗi xảy ra khi lưu Kế hoạch. Vui lòng thử lại.' }
@@ -58,3 +72,4 @@ export async function saveRoadmap(roadmapData: any) {
 
     return { success: true }
 }
+

@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { motion, useAnimation, PanInfo, useMotionValue, useTransform, AnimatePresence } from 'framer-motion';
-import { BatteryWarning, BatteryLow, BatteryMedium, BatteryFull, BatteryCharging, GripHorizontal, Clock, Hourglass } from 'lucide-react';
+import { BatteryWarning, BatteryLow, BatteryMedium, BatteryFull, BatteryCharging, GripHorizontal, Clock, Hourglass, Sparkles } from 'lucide-react';
 import { updateTaskStatus, deleteTask, rescheduleTask, saveEnergySnapshot } from './actions';
 
 const REACTION_OPTIONS = [
@@ -219,7 +219,7 @@ export default function TaskCard({ task }: { task: any }) {
                                 </div>
                             )}
 
-                            <div className="flex items-center mt-3 mb-1">
+                            <div className="flex items-center mt-3 mb-1 gap-2 flex-wrap">
                                 <div className={`flex items-center gap-1.5 px-2 py-1.5 bg-black/20 rounded-lg border backdrop-blur-md transition-colors ${energy > 3 ? 'border-rose-500/20 text-rose-300' : energy === 3 ? 'border-amber-500/20 text-amber-300' : 'border-emerald-500/20 text-emerald-300'}`}>
                                     {energy === 1 && <BatteryWarning className="w-4 h-4" />}
                                     {energy === 2 && <BatteryLow className="w-4 h-4" />}
@@ -232,6 +232,14 @@ export default function TaskCard({ task }: { task: any }) {
                                         ))}
                                     </div>
                                 </div>
+                                {task._burnoutFallback && task._burnoutFallback !== 'none' && (
+                                    <div className="flex items-center gap-1.5 px-2 py-1.5 bg-rose-500/10 rounded-lg border border-rose-500/20 text-rose-400 text-xs font-medium animate-pulse">
+                                        <Sparkles className="w-3.5 h-3.5" /> Chẩn đoán AI:
+                                        {task._burnoutFallback === 'micro_tasking' && ' Nên chia nhỏ'}
+                                        {task._burnoutFallback === 'reschedule' && ' Gợi ý dời lịch'}
+                                        {task._burnoutFallback === 'hide' && ' Nên tạm ẩn'}
+                                    </div>
+                                )}
                             </div>
                         </div>
 

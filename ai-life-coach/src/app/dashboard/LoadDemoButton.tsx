@@ -20,7 +20,6 @@ export default function LoadDemoButton({ onLoadSuccess }: { onLoadSuccess?: () =
                 if (onLoadSuccess) onLoadSuccess();
                 localStorage.removeItem('ai-coach-tour-seen');
                 router.refresh();
-                setTimeout(() => window.dispatchEvent(new Event('restart-tour')), 800);
             }
         } catch (err: any) {
             alert('Lỗi cục bộ: ' + (err?.message || ''));

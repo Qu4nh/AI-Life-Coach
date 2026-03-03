@@ -258,6 +258,14 @@ export async function loadMockData(): Promise<{ success: boolean; error?: string
         await supabase.from('daily_logs').delete().eq('user_id', user.id).eq('date', todayStr);
 
 
+        await supabase.from('events').delete().eq('user_id', user.id);
+        const { data: oldGoals } = await supabase.from('goals').select('id').eq('user_id', user.id);
+        if (oldGoals && oldGoals.length > 0) {
+            const oldGoalIds = oldGoals.map(g => g.id);
+            await supabase.from('tasks').delete().in('goal_id', oldGoalIds);
+            await supabase.from('goals').delete().eq('user_id', user.id);
+        }
+
         const targetDate = new Date(vnNow);
         targetDate.setDate(targetDate.getDate() + 45);
 
@@ -345,18 +353,23 @@ export async function loadMockData(): Promise<{ success: boolean; error?: string
 
 
         const events = [
-            { title: "📝 Thi thử IELTS Mini Test", description: "Bao gồm cả 4 kỹ năng - Nhớ cầm the bút chì đậm và gôm đi thi", date: dayOffset(5), is_hard_deadline: true },
-            { title: "📅 Nộp Essay cho giáo viên", description: "", date: dayOffset(3), is_hard_deadline: true },
-            { title: "🎯 Mock Test Full Hội Đồng Anh", description: "Testing địa điểm: Khách sạn Equatorial - Q5", date: dayOffset(10), is_hard_deadline: true },
-            { title: "📚 Mua sách Cambridge IELTS 19", description: "Hỏi anh Tâm xem ổng còn dư bản cứng không xin lại đỡ tốn", date: dayOffset(1), is_hard_deadline: false },
+            { title: "Nộp báo cáo cho Sếp (Hard Deadline)", description: "Gửi email tổng hợp số liệu tuần trước", date: todayStr, is_hard_deadline: true },
+            { title: "📄 Thi thử IELTS Mini Test", description: "Bao gồm cả 4 kỹ năng - Nhớ cầm the bút chì đậm và gôm đi thi", date: dayOffset(1), is_hard_deadline: true },
+            { title: "📅 Nộp Essay cho giáo viên", description: "", date: dayOffset(2), is_hard_deadline: true },
+            { title: "📚 Mua sách Cambridge IELTS 19", description: "Hỏi anh Tâm xem ổng còn dư bản cứng không xin lại đỡ tốn", date: dayOffset(3), is_hard_deadline: false },
             { title: "🗣️ Buổi Speaking Club Online", description: "", date: dayOffset(4), is_hard_deadline: false },
-            { title: "💪 Đăng ký học phần Yoga buổi sáng", description: "Phòng tập Elite Fitness Thảo Điền", date: dayOffset(2), is_hard_deadline: false },
+            { title: "💪 Đăng ký học phần Yoga buổi sáng", description: "Phòng tập Elite Fitness Thảo Điền", date: dayOffset(5), is_hard_deadline: false },
         ];
+
+        await supabase.from('events').delete().eq('user_id', user.id);
 
         const { error: eventsError } = await supabase.from('events').insert(
             events.map(e => ({ ...e, user_id: user.id }))
         );
-        if (eventsError) console.error('[loadMockData] Events error (non-fatal):', eventsError);
+        if (eventsError) {
+            console.error('[loadMockData] Events error:', JSON.stringify(eventsError, null, 2));
+            return { success: false, error: `Lỗi tạo Events: ${eventsError.message} (Code: ${eventsError.code})` };
+        }
 
 
         const logs = [
@@ -382,13 +395,16 @@ export async function regenerateRoadmap() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) throw new Error('Not authenticated');
 
-    const { data: goals } = await supabase
+    // === MULTI-GOAL ORCHESTRATION: Lấy TẤT CẢ mục tiêu ===
+    const { data: allGoals } = await supabase
         .from('goals').select('*').eq('user_id', user.id);
-    const activeGoal = goals && goals.length > 0 ? goals[0] : null;
-    if (!activeGoal) throw new Error('Chưa có mục tiêu nào');
+    if (!allGoals || allGoals.length === 0) throw new Error('Chưa có mục tiêu nào');
 
+    const allGoalIds = allGoals.map(g => g.id);
+
+    // Lấy TẤT CẢ tasks thuộc MỌI goal
     const { data: allTasks } = await supabase
-        .from('tasks').select('*').eq('goal_id', activeGoal.id);
+        .from('tasks').select('*').in('goal_id', allGoalIds);
 
     const completed = (allTasks || []).filter(t => t.status === 'completed');
     const pending = (allTasks || []).filter(t => t.status === 'pending');
@@ -409,80 +425,150 @@ export async function regenerateRoadmap() {
         .map(l => `${l.date}: ${l.notes}`)
         .join('\n');
 
-    const { GoogleGenerativeAI } = await import('@google/generative-ai');
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+    // === AI PERSISTENT MEMORY ===
+    const { data: aiMemories } = await supabase
+        .from('ai_memory')
+        .select('content, created_at')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(5);
 
-    const prompt = `Bạn là AI Life Coach - HUẤN LUYỆN VIÊN THẤU CẢM, không phải cỗ máy nhét việc vào lịch.
+    const memoryContext = (aiMemories || [])
+        .map(m => `[${new Date(m.created_at).toLocaleDateString('vi-VN')}] ${m.content}`)
+        .join('\n');
+
+    // === Deadline Events ===
+    const { data: hardEvents } = await supabase
+        .from('events').select('title, date')
+        .eq('user_id', user.id)
+        .eq('is_hard_deadline', true);
+
+    const hardConstraints = (hardEvents || [])
+        .map(e => `${e.date}: ${e.title}`)
+        .join('\n');
+
+    const { GoogleGenerativeAI, SchemaType } = await import('@google/generative-ai');
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
+    const model = genAI.getGenerativeModel({
+        model: 'gemini-2.5-flash',
+        generationConfig: {
+            responseMimeType: "application/json",
+            responseSchema: {
+                type: SchemaType.OBJECT,
+                properties: {
+                    tasks: {
+                        type: SchemaType.ARRAY,
+                        items: {
+                            type: SchemaType.OBJECT,
+                            properties: {
+                                goal_index: {
+                                    type: SchemaType.INTEGER,
+                                    description: "Index (0-based) of the goal this task belongs to, matching the DANH SÁCH MỤC TIÊU order"
+                                },
+                                date: {
+                                    type: SchemaType.STRING,
+                                    description: "Date in YYYY-MM-DD format"
+                                },
+                                title: {
+                                    type: SchemaType.STRING,
+                                    description: "Short title of the task"
+                                },
+                                description: {
+                                    type: SchemaType.STRING,
+                                    description: "Detailed description. Line 1: 'Bắt đầu: HH:MM | Thời lượng: X giờ/phút', Line 2: 'Chi tiết: ...'"
+                                },
+                                energy_required: {
+                                    type: SchemaType.INTEGER,
+                                    description: "Energy level required (1-5)"
+                                }
+                            },
+                            required: ["goal_index", "date", "title", "description", "energy_required"]
+                        },
+                        description: "List of tasks across ALL goals, intelligently interleaved on the same timeline."
+                    },
+                    coach_note: {
+                        type: SchemaType.STRING,
+                        description: "A short encouraging note from the AI coach about the multi-goal balance"
+                    }
+                },
+                required: ["tasks", "coach_note"]
+            }
+        }
+    });
+
+    // Build multi-goal context
+    const goalsContext = allGoals.map((g, i) => {
+        const goalCompleted = completed.filter(t => t.goal_id === g.id);
+        const goalPending = pending.filter(t => t.goal_id === g.id);
+        return `[Mục tiêu ${i}] "${g.title}"
+  Mô tả: ${g.description || 'Không có'}
+  Deadline: ${g.deadline || 'Không có'}
+  Đã xong: ${goalCompleted.length} task (${goalCompleted.map((t: any) => t.content.split(' - ')[0]).join(', ') || 'chưa có'})
+  Đang chờ: ${goalPending.length} task`;
+    }).join('\n\n');
+
+    const prompt = `Bạn là AI Life Coach - NHẠC TRƯỞNG THẤU CẢM, phân bổ NHIỀU MỤC TIÊU đan xen trên CÙNG 1 TIMELINE.
 Nguyên tắc tối thượng: "Sự bền bỉ quan trọng hơn cường độ" (Consistency > Intensity).
 
-MỤC TIÊU: ${activeGoal.title}
-MÔ TẢ: ${activeGoal.description || 'Không có'}
-NGÀY HẠN CHÓT: ${activeGoal.deadline || 'Không có'}
 HÔM NAY: ${today}
+SỐ LƯỢNG MỤC TIÊU: ${allGoals.length}
 
-TIẾN ĐỘ:
-- Đã hoàn thành: ${completed.length} task
-- Các task đã xong: ${completed.map(t => t.content.split(' - ')[0]).join(', ') || 'Chưa có'}
-- Đang chờ: ${pending.length} task
+=== DANH SÁCH MỤC TIÊU (Multi-Goal Context) ===
+${goalsContext}
 
 NĂNG LƯỢNG TRUNG BÌNH 7 NGÀY: ${avgEnergy}/5
 GHI CHÚ CẢM XÚC GẦN ĐÂY:
 ${recentNotes || 'Không có ghi chú'}
 
+=== VÙNG CẤM (Hard Constraints - KHÔNG XẾP TASK VÀO CÁC NGÀY NÀY) ===
+${hardConstraints || 'Không có ràng buộc cứng nào.'}
+TUYỆT ĐỐI KHÔNG xếp task học tập/làm việc vào các ngày thi cử/sự kiện ở trên. Đó là "Vùng cấm".
+
+=== KÝ ỨC AI COACH (AI PERSISTENT MEMORY) ===
+${memoryContext || 'Chưa có ký ức nào (phiên đầu tiên).'}
+
+=== TRIẾT LÝ MULTI-GOAL ORCHESTRATION ===
+Bạn là "nhạc trưởng" phân bổ Pin cho NHIỀU mục tiêu:
+- TỔNG PIN 1 NGÀY TỐI ĐA = 8. Tổng energy_required của tất cả task trên cùng 1 ngày KHÔNG ĐƯỢC vượt quá 8.
+- Nếu có 2+ mục tiêu: XEN KẼ ĐỀU, không dồn hết cho 1 goal trong nhiều ngày liên tục.
+- MỤC TIÊU CÓ DEADLINE GẦN HƠN → được ưu tiên tỷ trọng Pin cao hơn.
+- Mỗi task PHẢI có "goal_index" (số nguyên 0-based) tương ứng với thứ tự trong DANH SÁCH MỤC TIÊU ở trên.
+
 === TRIẾT LÝ ENERGY MANAGEMENT & GUILT-FREE ===
-Dựa trên tiến độ, năng lượng trung bình và ghi chú cảm xúc, hãy tái cấu trúc lộ trình (thay thế hoàn toàn task pending cũ).
 - Nếu năng lượng trung bình THẤP (< 2.5): Giảm mạnh cường độ, chủ yếu Micro-actions nhẹ nhàng (energy 1-2), nhiều ngày nghỉ.
 - Nếu năng lượng TRUNG BÌNH (2.5-3.5): Giữ nhịp ổn định, xen kẽ nặng và nhẹ.
 - Nếu năng lượng CAO (> 3.5): Có thể tăng cường độ nhưng VẪN giữ ngày nghỉ xen kẽ.
 
-=== QUY TẮC PHÂN BỔ TASKS - LINH HOẠT & CÁ NHÂN HÓA ===
-- LÊN LỊCH THEO TỪNG TASK CỤ THỂ, GẮN VỚI MỘT NGÀY CHÍNH XÁC (date) bắt đầu từ hôm nay ${today}.
-- TUYỆT ĐỐI KHÔNG BẮT BUỘC NGÀY NÀO CŨNG PHẢI CÓ TASK. BẠN PHẢI BỎ QUA (SKIP) CÁC NGÀY TRONG LỊCH ĐỂ TẠO NGÀY NGHỈ THỰC SỰ.
-- KHÔNG ĐƯỢC gộp nhiều ngày vào 1 task (CẤM dùng "Hàng ngày", "Mỗi tuần").
-- PHÂN BỔ LINH HOẠT CHỨ KHÔNG DẢN ĐỀU CƠ HỌC:
-  + CÓ NHỮNG NGÀY NGHỈ TOÀN TẬP (0 task trên ngày đó) để phục hồi năng lượng.
-  + CÓ NHỮNG NGÀY CHỈ 1 task nhẹ (Micro-action: 5-15 phút, energy 1-2).
-  + CÓ NHỮNG NGÀY DỒN NHIỀU TASK khi mục tiêu cần tập trung cao độ (Ví dụ: cuối tuần rảnh rỗi).
+=== QUY TẮC PHÂN BỔ TASKS ===
+- LÊN LỊCH TỪNG TASK GẮN VỚI NGÀY CHÍNH XÁC, bắt đầu từ ${today}.
+- TUYỆT ĐỐI KHÔNG BẮT BUỘC NGÀY NÀO CŨNG PHẢI CÓ TASK. TẠO NGÀY NGHỈ THẬT.
+- PHÂN BỔ LINH HOẠT: Có ngày nghỉ toàn tập, có ngày 1 task nhẹ, có ngày dồn nhiều.
 - TẠO NHỊP THỞ: Xen kẽ ngày nặng → nhẹ → nghỉ hoàn toàn.
 - "date": format "YYYY-MM-DD".
-- "title": CHỈ TÊN NGẮN GỌN. KHÔNG chèn giờ giấc hay mô tả.
-- "description": DÒNG ĐẦU: "Bắt đầu: HH:MM | Thời lượng: X giờ/phút". XUỐNG DÒNG: "Chi tiết: <hướng dẫn>".
-
-CHỈ trả về JSON thuần (không markdown):
-{
-  "tasks": [
-    { "date": "YYYY-MM-DD", "title": "Tên task ngắn gọn", "description": "Bắt đầu: HH:MM | Thời lượng: X giờ\\nChi tiết: Hướng dẫn cách làm", "energy_required": 1-5 }
-  ],
-  "coach_note": "Nhận xét ngắn về tiến độ và lời động viên thấu cảm"
-}`;
+- "title": CHỈ TÊN NGẮN GỌN. KHÔNG chèn giờ giấc.
+- "description": DÒNG ĐẦU: "Bắt đầu: HH:MM | Thời lượng: X giờ/phút". XUỐNG DÒNG: "Chi tiết: <hướng dẫn>".`;
 
     const result = await model.generateContent(prompt);
-    let output = result.response.text().trim();
-
-    if (output.startsWith('```json')) output = output.replace(/^```json/, '');
-    if (output.startsWith('```')) output = output.replace(/^```/, '');
-    if (output.endsWith('```')) output = output.replace(/```$/, '');
-    output = output.trim();
-
-    const data = JSON.parse(output);
+    const data = JSON.parse(result.response.text());
 
     if (!data.tasks || !Array.isArray(data.tasks)) {
         throw new Error('AI trả về dữ liệu không hợp lệ');
     }
 
-
-    await supabase.from('tasks')
-        .delete()
-        .eq('goal_id', activeGoal.id)
-        .eq('status', 'pending');
-
+    for (const goalId of allGoalIds) {
+        await supabase.from('tasks')
+            .delete()
+            .eq('goal_id', goalId)
+            .eq('status', 'pending');
+    }
 
     const newTasks = data.tasks.map((t: any, idx: number) => {
+        const goalIdx = Math.min(Math.max(0, t.goal_index || 0), allGoals.length - 1);
+        const targetGoal = allGoals[goalIdx];
         const taskDate = t.date && t.date.match(/^\d{4}-\d{2}-\d{2}$/) ? t.date : today;
         return {
             user_id: user.id,
-            goal_id: activeGoal.id,
+            goal_id: targetGoal.id,
             content: t.description ? `${t.title} - ${t.description}` : t.title,
             priority: idx + 1,
             energy_required: Math.min(5, Math.max(1, t.energy_required || 3)),
@@ -492,6 +578,16 @@ CHỈ trả về JSON thuần (không markdown):
     });
 
     await supabase.from('tasks').insert(newTasks);
+
+    // === AI PERSISTENT MEMORY ===
+    const goalNames = allGoals.map(g => g.title).join(' + ');
+    if (data.coach_note) {
+        await supabase.from('ai_memory').insert({
+            user_id: user.id,
+            type: 'coach_note',
+            content: `[Multi-Goal: ${goalNames}] ${data.coach_note} | Stats: ${completed.length} done, ${newTasks.length} new across ${allGoals.length} goals, avg_energy=${avgEnergy}`,
+        });
+    }
 
     revalidatePath('/dashboard');
 
