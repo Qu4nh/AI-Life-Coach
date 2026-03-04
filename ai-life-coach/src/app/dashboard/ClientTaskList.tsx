@@ -14,7 +14,7 @@ type SortOption = 'auto' | 'smart_ai' | 'priority' | 'time' | 'energy_asc' | 'en
 
 export default function ClientTaskList({ initialTasks, energyLevel }: { initialTasks: Task[], energyLevel: number }) {
 
-    // Mặc định chọn Auto
+    // Auto
     const [sortBy, setSortBy] = useState<SortOption>('auto');
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
@@ -31,10 +31,10 @@ export default function ClientTaskList({ initialTasks, energyLevel }: { initialT
 
     let processedTasks = [...initialTasks];
 
-    // Luôn tính toán Burnout Risk Score để lấy lời khuyên cảnh báo quá tải cho mọi chế độ xem
+    // Tính toán Burnout Risk Score
     const scoredTasks = calculateBurnoutRisk(energyLevel, processedTasks);
 
-    // Gắn thẻ lời khuyên fallback vào task gốc
+    // Fallback
     processedTasks = processedTasks.map(task => {
         const scoreInfo = scoredTasks.find(s => s.id === task.id);
         if (scoreInfo) {
@@ -43,87 +43,72 @@ export default function ClientTaskList({ initialTasks, energyLevel }: { initialT
         return task;
     });
 
-    // Giải quyết logic Auto nâng cao (Siêu Khớp - Hỗ trợ Nhịp sinh học)
+    // Auto-sort logic incorporating Energy, Burnout Risk, and biological rhythms
     if (sortBy === 'auto') {
         const currentHour = new Date().getHours();
 
-        // --- MÔ PHỎNG DỮ LIỆU TỪ BACKEND ---
-        // Giả sử thuật toán thống kê trên server trả về hồ sơ sinh học cá nhân của User này (Dạng Cú đêm):
+        // Mock
         const userProfile = {
-            peak_hours: [10, 11, 14, 15, 20, 21, 22], // Giờ Vàng: Trưa, Chiều và Tối muộn (Cú đêm)
-            dead_hours: [6, 7, 8, 9, 12, 13, 17, 18, 19, 23, 0, 1, 2, 3, 4, 5] // Giờ Chết: Sáng sớm & Chập tối
+            peak_hours: [10, 11, 14, 15, 20, 21, 22],
+            dead_hours: [6, 7, 8, 9, 12, 13, 17, 18, 19, 23, 0, 1, 2, 3, 4, 5]
         };
 
-        // KIỂM TRA TRẠNG THÁI HIỆN TẠI
         const isDeadHour = userProfile.dead_hours.includes(currentHour);
         const isPeakHour = userProfile.peak_hours.includes(currentHour);
 
         processedTasks.sort((a, b) => {
-            // Bước 1: Lấy các thông số của Task
             const timeA = parseTaskContent(a.content, true).timeValue || 9999;
             const timeB = parseTaskContent(b.content, true).timeValue || 9999;
             const energyReqA = a.energy_required || 3;
             const energyReqB = b.energy_required || 3;
-            const prioA = 5 - (a.priority || 3); // 1 = Q.trọng nhất chuyển sang 4 điểm
+            const prioA = 5 - (a.priority || 3);
             const prioB = 5 - (b.priority || 3);
 
-            // Bước 2: Lấy điểm Burnout Risk Score (Chứa sức ép Deadline)
             const burnoutA = scoredTasks.find(s => s.id === a.id);
             const burnoutB = scoredTasks.find(s => s.id === b.id);
-            const urgencyA = burnoutA?.metrics.urgency || 0; // 0-5
+            const urgencyA = burnoutA?.metrics.urgency || 0;
             const urgencyB = burnoutB?.metrics.urgency || 0;
 
-            // ---- TÍNH ĐIỂM DYNAMIC THEO NHỊP SINH HỌC CÁ NHÂN HÓA ----
             let dynamicScoreA = prioA * 10;
             let dynamicScoreB = prioB * 10;
 
-            // Yếu tố 1: HARD DEADLINE LÀ VUA (Bất chấp giờ giấc hay năng lượng)
+            // 1. Hard deadline
             if (urgencyA >= 3) dynamicScoreA += Math.exp(urgencyA) * 20;
             if (urgencyB >= 3) dynamicScoreB += Math.exp(urgencyB) * 20;
 
-            // Yếu tố 2: PHÙ HỢP CƠ ĐỊA CHUẨN (Energy Matching)
+            // 2. Energy matching
             if (energyLevel < energyReqA) dynamicScoreA -= (energyReqA - energyLevel) * 50;
             if (energyLevel < energyReqB) dynamicScoreB -= (energyReqB - energyLevel) * 50;
 
-            // Yếu tố 3: NHỊP SINH HỌC (Adaptive Triage)
+            // 3. Biological rhythm adaptive
             if (isDeadHour || energyLevel <= 2) {
-                // Đang trong "Khung Giờ Chết" HOẶC Đang kiệt sức: 
-                // -> KÍCH HOẠT KHIÊN: Thưởng điểm tuyệt đối cho việc nhẹ (Micro-actions energy 1-2)
                 if (energyReqA <= 2) dynamicScoreA += 40;
                 if (energyReqB <= 2) dynamicScoreB += 40;
 
-                // Trừ thêm điểm việc nặng để nó chìm hẳn xuống đáy
                 if (energyReqA >= 4) dynamicScoreA -= 30;
                 if (energyReqB >= 4) dynamicScoreB -= 30;
-
             } else if (isPeakHour) {
-                // Đang trong "Giờ Vàng": 
-                // -> ĂN CON CHỄNH ƯƠNG ƯƠNG: Thưởng cực đậm cho việc Khó & Quan trọng
                 dynamicScoreA += prioA * 20;
                 dynamicScoreB += prioB * 20;
                 if (energyReqA >= 4) dynamicScoreA += 15;
                 if (energyReqB >= 4) dynamicScoreB += 15;
-
             } else {
-                // Giờ Bình thường (Maintainance mode)
                 dynamicScoreA += prioA * 5;
                 dynamicScoreB += prioB * 5;
-                // Ưu tiên làm việc đến sớm trong ngày
                 if (timeA < timeB) dynamicScoreA += 5;
                 if (timeB < timeA) dynamicScoreB += 5;
             }
 
-            return dynamicScoreB - dynamicScoreA; // Sort Giảm dần
+            return dynamicScoreB - dynamicScoreA;
         });
     } else if (sortBy === 'smart_ai') {
-        // Nếu cố tình chọn Smart AI: Sort thuần túy theo Điểm Rủi Ro (Raw Score)
         processedTasks.sort((a, b) => {
             const scoreA = scoredTasks.find(s => s.id === a.id)?.rawScore || 0;
             const scoreB = scoredTasks.find(s => s.id === b.id)?.rawScore || 0;
             return scoreB - scoreA;
         });
     } else {
-        // Các bộ lọc truyền thống
+        // Filters
         processedTasks.sort((a, b) => {
             if (sortBy === 'priority') {
                 return a.priority - b.priority;
@@ -190,7 +175,6 @@ export default function ClientTaskList({ initialTasks, energyLevel }: { initialT
                         {processedTasks.length} NHIỆM VỤ KHẢ DỤNG
                     </p>
                 </div>
-
 
                 <div className="relative" ref={dropdownRef}>
                     <button

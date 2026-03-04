@@ -4,6 +4,7 @@
 import { createClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
+import { generateAIMemory } from './aiMemoryActions'
 
 function getVietnamToday(): string {
     return new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Ho_Chi_Minh' });
@@ -64,6 +65,10 @@ export async function saveDailyCheckIn(energyLevel: number, mood: string, notes:
         console.error('Error saving check-in:', JSON.stringify(error, null, 2));
         throw new Error(`Failed to save log: ${error.message} (Code: ${error.code})`);
     }
+
+    // Tự động kích hoạt chu trình suy nghĩ nội bộ AI (ẩn)
+    // Phải await vì môi trường Next.js/Vercel sẽ kill các promise chạy ngầm sau khi request kết thúc.
+    await generateAIMemory(user.id).catch(err => console.error('Background AI Memory generation error:', err));
 
     revalidatePath('/dashboard');
 }
@@ -381,6 +386,14 @@ export async function loadMockData(): Promise<{ success: boolean; error?: string
             await supabase.from('daily_logs').upsert(log, { onConflict: 'user_id,date' });
         }
 
+        await supabase.from('ai_memory').delete().eq('user_id', user.id);
+        const memories = [
+            { user_id: user.id, type: 'coach_note', content: `[Insight] Người dùng có xu hướng tập trung cực cao vào khung 09:00 - 11:00. Nên tận dụng thời gian này cho các task đòi hỏi tư duy sâu như Reading IELTS.`, created_at: new Date(Date.now() - 5 * 86400000).toISOString() },
+            { user_id: user.id, type: 'coach_note', content: `[Insight] Cần đặc biệt lưu ý: Người dùng thường cạn kiệt năng lượng (mức 1-2) vào các ngày thứ 4. Đã học được mẫu hình này để tự động giảm tải giữa tuần.`, created_at: new Date(Date.now() - 3 * 86400000).toISOString() },
+            { user_id: user.id, type: 'coach_note', content: `[Insight] Phát hiện sự tiến bộ đều đặn ở mục tiêu Gym, nhưng mảng Writing IELTS bị delay 2 lần trong tuần trước. Cần có biện pháp thúc đẩy nhẹ nhàng.`, created_at: new Date(Date.now() - 1 * 86400000).toISOString() },
+        ];
+        await supabase.from('ai_memory').insert(memories);
+
         revalidatePath('/dashboard');
         return { success: true };
 
@@ -554,19 +567,23 @@ ${memoryContext || 'Chưa có'}
         }).eq('id', task.id);
     }
 
-    // === AI PERSISTENT MEMORY ===
-    const goalNames = allGoals.map(g => g.title).join(' + ');
-    if (data.coach_note) {
-        await supabase.from('ai_memory').insert({
-            user_id: user.id,
-            type: 'coach_note',
-            content: `[Reschedule: ${goalNames}] ${data.coach_note} | ${pending.length} tasks rearranged, avg_energy=${avgEnergy}`,
-        });
-    }
+    // Tự động sinh thêm Insight mới khi user bấm Làm mới (để phục vụ Demo)
+    await generateAIMemory(user.id).catch(err => console.error('Error generating AI memory on reload:', err));
 
     revalidatePath('/dashboard');
 
-    return { success: true, coachNote: data.coach_note || '', taskCount: pending.length };
+    return {
+        success: true,
+        coachNote: data.coach_note || '',
+        taskCount: pending.length,
+        meta: {
+            goalCount: allGoals.length,
+            memoryCount: (aiMemories || []).length,
+            hardDeadlineCount: (hardEvents || []).length,
+            pendingCount: pending.length,
+            avgEnergy,
+        }
+    };
 }
 
 export async function logout() {

@@ -78,7 +78,7 @@ const TOUR_STEPS: TourStep[] = [
         target: '[data-tour="calendar"]',
         icon: CalendarDays,
         title: 'Lịch Trình Trực Quan',
-        description: 'Lịch tích hợp hiển thị cả nhiệm vụ lẫn deadline cứng (thi cử, họp). \n 💡 Mẹo: Nhấn vào ô NGÀY (hình tròn) để thêm nhanh nhiệm vụ/sự kiện vào ngày đó! Nhấn vào sự kiện để chỉnh sửa hoặc xóa.',
+        description: 'Lịch tích hợp hiển thị cả nhiệm vụ lẫn deadline cứng (thi cử, họp). \n 💡 Mẹo: Nhấn vào ô NGÀY (hình tròn) để xem chi tiết lịch trình của ngày đó! Nhấn vào sự kiện để chỉnh sửa hoặc xóa.',
         color: 'from-sky-500 to-blue-500',
         position: 'left',
         scrollTo: true,

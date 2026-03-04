@@ -1,8 +1,20 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { TrendingUp, Flame, Zap, Target, Activity, ChevronDown } from 'lucide-react';
-import { motion, AnimatePresence, Variants } from 'framer-motion';
+import { motion, AnimatePresence, Variants, useMotionValue, useTransform, animate } from 'framer-motion';
+
+function AnimatedNumber({ value, isFloat = false }: { value: number, isFloat?: boolean }) {
+    const count = useMotionValue(0);
+    const display = useTransform(count, v => isFloat ? v.toFixed(1) : Math.round(v).toString());
+
+    useEffect(() => {
+        const controls = animate(count, value, { duration: 1.5, ease: "easeOut", delay: 0.3 });
+        return controls.stop;
+    }, [value, count]);
+
+    return <motion.span>{display}</motion.span>;
+}
 
 export default function DashboardStats() {
     const [isExpanded, setIsExpanded] = useState(false);
@@ -71,15 +83,25 @@ export default function DashboardStats() {
                                         <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center">
                                             <TrendingUp className="w-5 h-5 text-blue-400" />
                                         </div>
-                                        <span className="text-blue-400 text-sm font-semibold flex items-center gap-1">
+                                        <motion.span
+                                            initial={{ opacity: 0, x: -10 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            transition={{ delay: 0.8 }}
+                                            className="text-blue-400 text-sm font-semibold flex items-center gap-1"
+                                        >
                                             +12% <TrendingUp className="w-3 h-3" />
-                                        </span>
+                                        </motion.span>
                                     </div>
                                     <h3 className="text-white/60 text-sm font-medium mb-1">Năng suất tổng thể</h3>
-                                    <p className="text-2xl font-bold">85<span className="text-lg text-white/40">%</span></p>
+                                    <p className="text-2xl font-bold"><AnimatedNumber value={85} /><span className="text-lg text-white/40">%</span></p>
 
-                                    <div className="w-full bg-white/5 rounded-full h-1.5 mt-4">
-                                        <div className="bg-gradient-to-r from-blue-500 to-cyan-400 h-1.5 rounded-full" style={{ width: '85%' }}></div>
+                                    <div className="w-full bg-white/5 rounded-full h-1.5 mt-4 overflow-hidden">
+                                        <motion.div
+                                            initial={{ width: 0 }}
+                                            animate={{ width: '85%' }}
+                                            transition={{ duration: 1.5, delay: 0.5, ease: "easeOut" }}
+                                            className="bg-gradient-to-r from-blue-500 to-cyan-400 h-1.5 rounded-full"
+                                        />
                                     </div>
                                 </motion.div>
 
@@ -89,16 +111,27 @@ export default function DashboardStats() {
                                         <div className="w-10 h-10 rounded-full bg-orange-500/20 flex items-center justify-center">
                                             <Flame className="w-5 h-5 text-orange-400" />
                                         </div>
-                                        <span className="text-white/40 text-sm font-semibold">
+                                        <motion.span
+                                            initial={{ opacity: 0 }}
+                                            animate={{ opacity: 1 }}
+                                            transition={{ delay: 0.8 }}
+                                            className="text-white/40 text-sm font-semibold"
+                                        >
                                             Kỷ lục: 14 ngày
-                                        </span>
+                                        </motion.span>
                                     </div>
                                     <h3 className="text-white/60 text-sm font-medium mb-1">Chuỗi kiên trì</h3>
-                                    <p className="text-2xl font-bold">7<span className="text-lg text-white/40"> ngày</span></p>
+                                    <p className="text-2xl font-bold"><AnimatedNumber value={7} /><span className="text-lg text-white/40"> ngày</span></p>
 
                                     <div className="flex gap-1 mt-4">
-                                        {[1, 2, 3, 4, 5, 6, 7].map((day) => (
-                                            <div key={day} className={`h-1.5 flex-1 rounded-full bg-orange-500`}></div>
+                                        {[1, 2, 3, 4, 5, 6, 7].map((day, i) => (
+                                            <motion.div
+                                                key={day}
+                                                initial={{ scale: 0, opacity: 0 }}
+                                                animate={{ scale: 1, opacity: 1 }}
+                                                transition={{ delay: 0.6 + i * 0.1, type: "spring", stiffness: 300, damping: 15 }}
+                                                className={`h-1.5 flex-1 rounded-full bg-orange-500`}
+                                            />
                                         ))}
                                     </div>
                                 </motion.div>
@@ -109,15 +142,25 @@ export default function DashboardStats() {
                                         <div className="w-10 h-10 rounded-full bg-yellow-500/20 flex items-center justify-center">
                                             <Zap className="w-5 h-5 text-yellow-400" />
                                         </div>
-                                        <span className="text-yellow-400 text-sm font-semibold">
+                                        <motion.span
+                                            initial={{ opacity: 0, scale: 0.8 }}
+                                            animate={{ opacity: 1, scale: 1 }}
+                                            transition={{ delay: 0.9, type: 'spring' }}
+                                            className="text-yellow-400 text-sm font-semibold"
+                                        >
                                             Tuyệt vời
-                                        </span>
+                                        </motion.span>
                                     </div>
                                     <h3 className="text-white/60 text-sm font-medium mb-1">Năng lượng trung bình</h3>
-                                    <p className="text-2xl font-bold">4.2<span className="text-lg text-white/40">/5</span></p>
+                                    <p className="text-2xl font-bold"><AnimatedNumber value={4.2} isFloat={true} /><span className="text-lg text-white/40">/5</span></p>
 
-                                    <div className="w-full bg-white/5 rounded-full h-1.5 mt-4">
-                                        <div className="bg-gradient-to-r from-yellow-500 to-amber-500 h-1.5 rounded-full" style={{ width: '84%' }}></div>
+                                    <div className="w-full bg-white/5 rounded-full h-1.5 mt-4 overflow-hidden">
+                                        <motion.div
+                                            initial={{ width: 0 }}
+                                            animate={{ width: '84%' }}
+                                            transition={{ duration: 1.5, delay: 0.6, ease: "easeOut" }}
+                                            className="bg-gradient-to-r from-yellow-500 to-amber-500 h-1.5 rounded-full"
+                                        />
                                     </div>
                                 </motion.div>
 
@@ -127,15 +170,25 @@ export default function DashboardStats() {
                                         <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center">
                                             <Target className="w-5 h-5 text-emerald-400" />
                                         </div>
-                                        <span className="text-emerald-400 text-sm font-semibold flex items-center gap-1">
+                                        <motion.span
+                                            initial={{ opacity: 0, x: -10 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            transition={{ delay: 0.9 }}
+                                            className="text-emerald-400 text-sm font-semibold flex items-center gap-1"
+                                        >
                                             +3 <TrendingUp className="w-3 h-3" />
-                                        </span>
+                                        </motion.span>
                                     </div>
                                     <h3 className="text-white/60 text-sm font-medium mb-1">Task hoàn thành</h3>
-                                    <p className="text-2xl font-bold">18<span className="text-lg text-white/40"> task</span></p>
+                                    <p className="text-2xl font-bold"><AnimatedNumber value={18} /><span className="text-lg text-white/40"> task</span></p>
 
-                                    <div className="w-full bg-white/5 rounded-full h-1.5 mt-4">
-                                        <div className="bg-gradient-to-r from-emerald-500 to-teal-400 h-1.5 rounded-full" style={{ width: '65%' }}></div>
+                                    <div className="w-full bg-white/5 rounded-full h-1.5 mt-4 overflow-hidden">
+                                        <motion.div
+                                            initial={{ width: 0 }}
+                                            animate={{ width: '65%' }}
+                                            transition={{ duration: 1.5, delay: 0.7, ease: "easeOut" }}
+                                            className="bg-gradient-to-r from-emerald-500 to-teal-400 h-1.5 rounded-full"
+                                        />
                                     </div>
                                 </motion.div>
                             </motion.div>

@@ -8,6 +8,8 @@ import ClientTaskList from './ClientTaskList';
 import DeleteGoalButton from './DeleteGoalButton';
 import CountdownWidget from './CountdownWidget';
 import DashboardControls from './DashboardControls';
+import AIMemoryCard from './AIMemoryCard';
+import DashboardAIWrapper from './DashboardAIWrapper';
 import NightReflection from './NightReflection';
 import LoadDemoButton from './LoadDemoButton';
 import GuidedTour from './GuidedTour';
@@ -97,6 +99,13 @@ export default async function DashboardPage() {
     const today = getVietnamToday();
     const { data: log } = await supabase.from('daily_logs').select('energy_level').eq('user_id', user.id).eq('date', today).single();
     const energyLevel = log?.energy_level || 3;
+
+    const { data: aiMemories } = await supabase
+        .from('ai_memory')
+        .select('content, created_at')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(5);
 
 
     const taskEvents = (tasks || []).map((t, idx) => {
@@ -192,28 +201,37 @@ export default async function DashboardPage() {
                 )}
 
                 {goals && goals.length > 0 && goals.some(g => g.title.includes("Chinh phục IELTS") || g.title.includes("Giảm 3kg mỡ")) && (
-                    <DashboardStats />
+                    <div className="flex flex-col lg:flex-row gap-6 mb-6">
+                        <div className="flex-1">
+                            <DashboardStats />
+                        </div>
+                        <div className="lg:w-1/3">
+                            <AIMemoryCard memories={aiMemories || []} />
+                        </div>
+                    </div>
+                )}
+                {/* Fallback if DashboardStats isn't showing but we have memories */}
+                {!(goals && goals.length > 0 && goals.some(g => g.title.includes("Chinh phục IELTS") || g.title.includes("Giảm 3kg mỡ"))) && aiMemories && aiMemories.length > 0 && (
+                    <div className="mb-6">
+                        <AIMemoryCard memories={aiMemories || []} />
+                    </div>
                 )}
 
-                <div data-tour="ai-controls">
-                    <DashboardControls hasTasks={!!(tasks && tasks.length > 0)} />
-                </div>
-
-
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10 items-start pb-24">
-
-
-                    <div className="lg:col-span-12 xl:col-span-4 space-y-6 relative z-30" data-tour="tasks">
-                        <ClientTaskList initialTasks={todaysTasks} energyLevel={energyLevel} />
+                <DashboardAIWrapper>
+                    <div data-tour="ai-controls" className="mb-6">
+                        <DashboardControls hasTasks={!!(tasks && tasks.length > 0)} />
                     </div>
 
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10 items-start pb-24">
+                        <div className="lg:col-span-12 xl:col-span-4 space-y-6 relative z-30" data-tour="tasks">
+                            <ClientTaskList initialTasks={todaysTasks} energyLevel={energyLevel} />
+                        </div>
 
-                    <div className="lg:col-span-12 xl:col-span-8 w-full relative z-10" data-tour="calendar">
-                        <CalendarWidget initialEvents={combinedCalendarData} />
+                        <div className="lg:col-span-12 xl:col-span-8 w-full relative z-10" data-tour="calendar">
+                            <CalendarWidget initialEvents={combinedCalendarData} />
+                        </div>
                     </div>
-
-                </div>
-
+                </DashboardAIWrapper>
 
                 <NightReflection hasTasks={!!(tasks && tasks.length > 0)} />
             </main>

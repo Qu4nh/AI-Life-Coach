@@ -32,7 +32,6 @@ export default function TaskCard({ task }: { task: any }) {
     let noteInfo = restContent;
 
     if (restContent.includes('Bắt đầu:') || restContent.includes('Thời lượng:')) {
-        // Normalize: handle both literal "\n" text and actual newline chars
         const normalized = restContent.replace(/\\n/g, '\n');
         const lines = normalized.split('\n');
         const timeLine = lines[0];
@@ -233,11 +232,11 @@ export default function TaskCard({ task }: { task: any }) {
                                     </div>
                                 </div>
                                 {task._burnoutFallback && task._burnoutFallback !== 'none' && (
-                                    <div className="flex items-center gap-1.5 px-2 py-1.5 bg-rose-500/10 rounded-lg border border-rose-500/20 text-rose-400 text-xs font-medium animate-pulse">
-                                        <Sparkles className="w-3.5 h-3.5" /> Chẩn đoán AI:
-                                        {task._burnoutFallback === 'micro_tasking' && ' Nên chia nhỏ'}
-                                        {task._burnoutFallback === 'reschedule' && ' Gợi ý dời lịch'}
-                                        {task._burnoutFallback === 'hide' && ' Nên tạm ẩn'}
+                                    <div className="flex items-center gap-1.5 px-2 py-1.5 bg-rose-500/10 rounded-lg border border-rose-500/20 text-rose-400 text-xs font-medium">
+                                        <Sparkles className="w-3.5 h-3.5" />
+                                        {task._burnoutFallback === 'micro_tasking' && 'Nên chia nhỏ'}
+                                        {task._burnoutFallback === 'reschedule' && 'Gợi ý dời lịch'}
+                                        {task._burnoutFallback === 'hide' && 'Tạm ẩn'}
                                     </div>
                                 )}
                             </div>

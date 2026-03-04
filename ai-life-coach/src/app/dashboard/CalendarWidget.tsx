@@ -13,6 +13,7 @@ import { createClient } from '@/utils/supabase/client';
 import { editTask } from './actions';
 import { parseTaskContent } from '@/utils/taskParser';
 import ConfirmModal from './ConfirmModal';
+import { useAIRefresh } from './AIRefreshContext';
 
 export const revalidate = 0;
 
@@ -290,7 +291,6 @@ export default function CalendarWidget({ initialEvents }: CalendarWidgetProps) {
 
     const onDateClick = (day: Date) => {
         setSelectedDate(day);
-        setIsAddingEvent(true);
     };
 
 
@@ -504,7 +504,7 @@ export default function CalendarWidget({ initialEvents }: CalendarWidgetProps) {
                         className="flex flex-row sm:flex-col items-center sm:min-w-[60px] cursor-pointer gap-2 sm:gap-1 mt-1 shrink-0"
                         onClick={() => onDateClick(cloneDay)}
                     >
-                        <div className={`w-12 h-12 rounded-full flex flex-col items-center justify-center transition-all ${isToday ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/30' : isSelected ? 'bg-white/10 text-white ring-2 ring-indigo-500/50' : 'bg-white/5 text-white/70 hover:bg-white/10'}`} title="Nh&#7845;n &#273;&#7875; th&#234;m l&#7883;ch tr&#236;nh v&#224;o ng&#224;y n&#224;y">
+                        <div className={`w-12 h-12 rounded-full flex flex-col items-center justify-center transition-all ${isToday ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/30' : isSelected ? 'bg-white/10 text-white ring-2 ring-indigo-500/50' : 'bg-white/5 text-white/70 hover:bg-white/10'}`}>
                             <span className="text-lg font-bold leading-none">{formattedDate}</span>
                         </div>
                         <span className={`text-xs mt-0 sm:mt-1 font-medium sm:font-normal uppercase ${isToday ? 'text-indigo-400' : 'text-white/50'}`}>
@@ -658,8 +658,62 @@ export default function CalendarWidget({ initialEvents }: CalendarWidgetProps) {
         })
         : [];
 
+    const { isRefreshing, processingSteps } = useAIRefresh();
+
     return (
         <div className="liquid-glass rounded-3xl p-4 md:p-6 shadow-2xl flex flex-col relative h-[500px] md:h-[600px] lg:h-[700px]">
+
+            {/* AI Refresh Overlay */}
+            <AnimatePresence>
+                {isRefreshing && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="absolute inset-0 z-50 rounded-3xl bg-neutral-900/80 backdrop-blur-md flex items-center justify-center"
+                    >
+                        <div className="text-center px-8 max-w-sm">
+                            <div className="relative w-16 h-16 mx-auto mb-6">
+                                <motion.div
+                                    animate={{ scale: [1, 1.3, 1], opacity: [0.3, 0.6, 0.3] }}
+                                    transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+                                    className="absolute inset-0 rounded-full bg-indigo-500/30 blur-xl"
+                                />
+                                <div className="absolute inset-2 rounded-full bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center">
+                                    <motion.div
+                                        animate={{ rotate: 360 }}
+                                        transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
+                                        className="w-6 h-6 border-2 border-indigo-400 border-t-transparent rounded-full"
+                                    />
+                                </div>
+                            </div>
+                            <p className="text-xs font-semibold text-indigo-300 uppercase tracking-wider mb-4">AI Life Coach</p>
+                            <div className="space-y-2 text-left">
+                                {processingSteps.map((step, i) => (
+                                    <motion.div
+                                        key={i}
+                                        initial={{ opacity: 0, x: -8 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        transition={{ delay: i * 0.4, duration: 0.3 }}
+                                        className="flex items-center gap-2"
+                                    >
+                                        {step.done ? (
+                                            <span className="w-4 h-4 rounded-full bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center shrink-0">
+                                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                                            </span>
+                                        ) : (
+                                            <span className="w-4 h-4 rounded-full border border-indigo-500/40 flex items-center justify-center shrink-0">
+                                                <motion.span animate={{ opacity: [0.3, 1, 0.3] }} transition={{ duration: 1, repeat: Infinity }} className="w-1.5 h-1.5 rounded-full bg-indigo-400" />
+                                            </span>
+                                        )}
+                                        <span className={`text-xs leading-relaxed ${step.done ? 'text-white/50' : 'text-indigo-300'}`}>{step.label}</span>
+                                    </motion.div>
+                                ))}
+                            </div>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 shrink-0">
                 <h2 className="text-xl font-bold flex items-center gap-2 text-white">
